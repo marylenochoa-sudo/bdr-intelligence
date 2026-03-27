@@ -15,12 +15,19 @@ def get_data():
     emp_range = request.args.get("employees", "")
     query = request.args.get("q", "").lower()
 
-    def match_emp(emp, r):
-        if not r: return True
-        if "-" in r:
-            lo, hi = r.split("-")
-            return int(lo) <= emp <= int(hi)
-        return emp >= int(r)
+    def match_emp(emp, ranges_str):
+        if not ranges_str: return True
+        ranges = ranges_str.split(",")
+        for r in ranges:
+            r = r.strip()
+            if "-" in r:
+                lo, hi = r.split("-")
+                if int(lo) <= emp <= int(hi): return True
+            elif r.endswith("+"):
+                if emp >= int(r.replace("+","")): return True
+            else:
+                if emp >= int(r): return True
+        return False
 
     def match_filters(c):
         if country and c.get("country","") != country: return False

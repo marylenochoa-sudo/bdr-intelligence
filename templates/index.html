@@ -115,6 +115,20 @@
   .stat-value { color: var(--blue); font-weight: 700; }
 
   .loading { text-align: center; padding: 40px; color: var(--muted); }
+
+  /* Multi-select dropdown for employees */
+  .multiselect-wrapper { position: relative; margin-bottom: 12px; }
+  .multiselect-toggle { width: 100%; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 12px; background: var(--white); color: var(--text); outline: none; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; }
+  .multiselect-toggle:focus { border-color: var(--blue); }
+  .multiselect-toggle .arrow { font-size: 10px; color: var(--muted); }
+  .multiselect-dropdown { display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--white); border: 1.5px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100; max-height: 220px; overflow-y: auto; margin-top: 2px; }
+  .multiselect-dropdown.open { display: block; }
+  .multiselect-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; font-size: 12px; cursor: pointer; transition: background 0.1s; }
+  .multiselect-item:hover { background: var(--bg); }
+  .multiselect-item input[type="checkbox"] { accent-color: var(--blue); cursor: pointer; }
+  .multiselect-item label { cursor: pointer; flex: 1; }
+  .selected-tags { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
+  .selected-tag { background: #e8f4fd; color: var(--blue); font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; }
 </style>
 </head>
 <body>
@@ -165,17 +179,23 @@
     <select class="filter-select" id="f-industry"><option value="">Todas</option></select>
 
     <label class="filter-label">Tamaño empresa</label>
-    <select class="filter-select" id="f-employees">
-      <option value="">Cualquier tamaño</option>
-      <option value="1-10">1 — 10</option>
-      <option value="11-50">11 — 50</option>
-      <option value="51-200">51 — 200</option>
-      <option value="201-500">201 — 500</option>
-      <option value="501-1000">501 — 1.000</option>
-      <option value="1001-5000">1.001 — 5.000</option>
-      <option value="5001-10000">5.001 — 10.000</option>
-      <option value="10001">10.000+</option>
-    </select>
+    <div class="multiselect-wrapper" id="f-employees-wrapper">
+      <button class="multiselect-toggle" id="f-employees-toggle" type="button" onclick="toggleEmployeesDropdown()">
+        <span id="f-employees-label">Cualquier tamaño</span>
+        <span class="arrow">&#9662;</span>
+      </button>
+      <div class="multiselect-dropdown" id="f-employees-dropdown">
+        <div class="multiselect-item" onclick="event.stopPropagation()"><input type="checkbox" id="emp-1-10" value="1-10" onchange="updateEmployeesLabel()"><label for="emp-1-10">1 — 10</label></div>
+        <div class="multiselect-item" onclick="event.stopPropagation()"><input type="checkbox" id="emp-11-50" value="11-50" onchange="updateEmployeesLabel()"><label for="emp-11-50">11 — 50</label></div>
+        <div class="multiselect-item" onclick="event.stopPropagation()"><input type="checkbox" id="emp-51-200" value="51-200" onchange="updateEmployeesLabel()"><label for="emp-51-200">51 — 200</label></div>
+        <div class="multiselect-item" onclick="event.stopPropagation()"><input type="checkbox" id="emp-201-500" value="201-500" onchange="updateEmployeesLabel()"><label for="emp-201-500">201 — 500</label></div>
+        <div class="multiselect-item" onclick="event.stopPropagation()"><input type="checkbox" id="emp-501-1000" value="501-1000" onchange="updateEmployeesLabel()"><label for="emp-501-1000">501 — 1.000</label></div>
+        <div class="multiselect-item" onclick="event.stopPropagation()"><input type="checkbox" id="emp-1001-5000" value="1001-5000" onchange="updateEmployeesLabel()"><label for="emp-1001-5000">1.001 — 5.000</label></div>
+        <div class="multiselect-item" onclick="event.stopPropagation()"><input type="checkbox" id="emp-5001-10000" value="5001-10000" onchange="updateEmployeesLabel()"><label for="emp-5001-10000">5.001 — 10.000</label></div>
+        <div class="multiselect-item" onclick="event.stopPropagation()"><input type="checkbox" id="emp-10001" value="10001+" onchange="updateEmployeesLabel()"><label for="emp-10001">10.001+</label></div>
+      </div>
+      <div class="selected-tags" id="f-employees-tags"></div>
+    </div>
 
     <button class="apply-btn" onclick="applyFilters()">Aplicar filtros</button>
     <button class="clear-btn" onclick="clearAll()">Limpiar todo</button>
@@ -218,14 +238,45 @@ function setActive(id) {
   }
 }
 
+function getSelectedEmployees() {
+  const checks = document.querySelectorAll('#f-employees-dropdown input[type="checkbox"]:checked');
+  return Array.from(checks).map(cb => cb.value);
+}
+
+function toggleEmployeesDropdown() {
+  const dd = document.getElementById("f-employees-dropdown");
+  dd.classList.toggle("open");
+}
+
+function updateEmployeesLabel() {
+  const selected = getSelectedEmployees();
+  const label = document.getElementById("f-employees-label");
+  const tagsEl = document.getElementById("f-employees-tags");
+  if (selected.length === 0) {
+    label.textContent = "Cualquier tamaño";
+    tagsEl.innerHTML = "";
+  } else {
+    label.textContent = selected.length + " rango" + (selected.length > 1 ? "s" : "") + " seleccionado" + (selected.length > 1 ? "s" : "");
+    tagsEl.innerHTML = selected.map(s => '<span class="selected-tag">' + s + '</span>').join("");
+  }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener("click", function(e) {
+  const wrapper = document.getElementById("f-employees-wrapper");
+  if (wrapper && !wrapper.contains(e.target)) {
+    document.getElementById("f-employees-dropdown").classList.remove("open");
+  }
+});
+
 function getFilterParams() {
   const p = new URLSearchParams();
   const c = document.getElementById("f-country").value;
   const i = document.getElementById("f-industry").value;
-  const e = document.getElementById("f-employees").value;
+  const empArr = getSelectedEmployees();
   if (c) p.set("country", c);
   if (i) p.set("industry", i);
-  if (e) p.set("employees", e);
+  if (empArr.length > 0) p.set("employees", empArr.join(","));
   return p.toString();
 }
 
@@ -247,7 +298,8 @@ function applyFilters() {
 function clearAll() {
   document.getElementById("f-country").value = "";
   document.getElementById("f-industry").value = "";
-  document.getElementById("f-employees").value = "";
+  document.querySelectorAll('#f-employees-dropdown input[type="checkbox"]').forEach(cb => cb.checked = false);
+  updateEmployeesLabel();
   currentSource = "";
   document.querySelectorAll(".nav-btn").forEach(b => b.className = "nav-btn");
   document.getElementById("results").innerHTML = '<div class="empty-state"><div class="icon">🎯</div><h3>Seleccioná un filtro o preguntame</h3><p>Usá los botones del panel izquierdo para ver data de HubSpot o Lusha, aplicá filtros, o escribí lo que necesitás en el buscador.</p></div>';
@@ -349,6 +401,37 @@ function renderData(source, data) {
 
 loadFilters();
 
+// ── CLIENT REFERENCES ────────────────────────────────────────────
+const CLIENT_REFS = {
+  "Colombia": ["Grupo Éxito", "Banco Davivienda", "Efecty"],
+  "México": ["OXXO", "Bimbo", "FEMSA", "Grupo Posadas"],
+  "Argentina": ["Swiss Medical", "Arcelor Mittal", "Tenaris"],
+  "Perú": ["Belcorp", "Intercorp"],
+  "Brasil": ["MRV&CO"],
+  "default": ["OXXO", "Swiss Medical", "Banco Davivienda"],
+};
+
+function getRefs(country) {
+  const arr = CLIENT_REFS[country] || CLIENT_REFS["default"];
+  return arr.join(", ");
+}
+function getRef(country) {
+  const arr = CLIENT_REFS[country] || CLIENT_REFS["default"];
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// ── SUBJECT LINES ────────────────────────────────────────────────
+function getSubjects(firstName, company) {
+  return [
+    "Reunión con " + firstName,
+    firstName + ", intenté llamarte a tu celular",
+    firstName + ", una consulta",
+    company + " + Humand",
+    "Seguimiento — " + company + " + Humand",
+    "Re: " + company + " + Humand",
+  ];
+}
+
 // ── TEMPLATES MODAL ──────────────────────────────────────────────
 let tplData = null;
 let tplChannel = "email";
@@ -366,87 +449,214 @@ function openTemplates(contact) {
 
 function closeTemplates() { document.getElementById("tpl-modal").style.display = "none"; }
 
-function setTplChannel(ch) { tplChannel = ch; tplIdx = 0; renderTemplate(); }
+function setTplChannel(ch) {
+  tplChannel = ch;
+  tplIdx = 0;
+  // Reset type to first valid type for this channel
+  if (ch === "linkedin") tplType = "first";
+  else tplType = "first";
+  renderTemplate();
+  renderTypeButtons();
+}
 function setTplType(t) { tplType = t; tplIdx = 0; renderTemplate(); }
 function regenerateTemplate() { tplIdx++; renderTemplate(); }
 
+// ── FULL TEMPLATE BANK (from MessageModal.tsx) ───────────────────
 function getTemplates() {
-  if (!tplData) return [];
+  if (!tplData) return { subjects: [], bodies: [] };
   const n = tplData.name.split(" ")[0] || "equipo";
   const co = tplData.company || "";
   const ind = tplData.industry || "tu sector";
   const country = tplData.country || "LATAM";
-  const refs = {"Colombia":"Grupo Éxito, Banco Davivienda","México":"OXXO, Bimbo","Argentina":"Swiss Medical, Tenaris","Perú":"Belcorp, Intercorp","Brasil":"MRV&CO","default":"OXXO, Swiss Medical"}[country] || "OXXO, Swiss Medical";
+  const refs = getRefs(country);
+  const ref = getRef(country);
+
+  const subjects = getSubjects(n, co);
 
   const banks = {
     email: {
       first: [
-        "Hola " + n + ", ¿cómo estás? Soy BDR de Humand. Vi tu perfil en LinkedIn y, siendo tu rol en " + co + ", creo que lo que hacemos puede ser muy relevante.\n\nHumand centraliza RRHH, comunicación interna, onboarding y cultura en una sola app desde el celular.\n\nYa trabajamos con " + refs + ", donde la info llega un 34% más rápido y redujimos un 30% las consultas a RRHH.\n\n¿Tendrías unos minutos esta semana para que te muestre cómo funciona? Sin compromiso.",
-        "Hola " + n + ",\n\nEn " + co + " sé que gestionar la comunicación interna no es fácil. En Humand ayudamos a empresas como " + refs + " a centralizar todo en una sola app.\n\nNuestros clientes ahorran ~5 horas por empleado por semana.\n\n¿20 min para mostrarte? Sin compromiso.",
-        "Hola " + n + ",\n\nSoy de Humand. Vi tu perfil en " + co + " y me llamó la atención porque trabajamos con empresas de " + ind + ".\n\n+1.500 empresas ya usan Humand. 4.9/5 en stores.\n\n¿Tenés 20 min esta semana?",
+        "Hola " + n + ", ¿cómo estás? Soy BDR de Humand. Vi tu perfil en LinkedIn y, siendo tu rol en " + co + ", creo que lo que hacemos puede ser muy relevante para ti y tu equipo.\n\nHumand es una plataforma todo en uno que centraliza la gestión de RRHH, comunicación interna, onboarding y cultura empresarial en una sola app desde el celular, diseñada para llegar a todos los colaboradores, desde oficina hasta planta de producción.\n\nYa trabajamos con empresas como " + refs + ", donde logramos que la información llegue a todos los colaboradores un 34% más rápido y redujimos un 30% las consultas repetitivas al área de RRHH.\n\nCreo que para " + co + " puede marcar una diferencia real en el día a día.\n\n¿Tendrías unos minutos esta semana o la próxima para que te muestre cómo funciona? Sin compromiso, solo para que lo conozcan y lo tengan en el radar.",
+        "Hola " + n + ", ¿cómo estás?\n\nTe escribo porque en " + co + " sé que gestionar la comunicación interna y los procesos de RRHH para todo el equipo no es tarea fácil.\n\nEn Humand ayudamos a empresas como " + ref + " a centralizar todo en una sola app: desde recibos de sueldo hasta evaluaciones de desempeño. Nuestros clientes ahorran ~5 horas por empleado por semana.\n\n¿Te parece si coordinamos 20 min para mostrarte cómo funciona? Sin compromiso.",
+        "Hola " + n + ",\n\nSoy de Humand y vi tu perfil en " + co + ". Me llamó la atención porque justamente trabajamos con empresas de " + ind + " ayudándolas a digitalizar la experiencia del colaborador.\n\n" + ref + " ya usa Humand y logró un 82% de adopción en los primeros 3 meses.\n\n¿Tendrías unos minutos para que te cuente cómo podría funcionar para " + co + "?",
+        "Hola " + n + ", ¿cómo va todo?\n\nTe contacto porque desde Humand acompañamos a empresas de " + ind + " a resolver un problema muy común: que la información llegue a todos los colaboradores sin importar si están en oficina, planta o en la calle.\n\nHoy +1.500 empresas usan Humand. " + ref + " es una de ellas.\n\n¿Te interesaría ver una demo rápida de 20 min?",
+        "Hola " + n + ",\n\nSé que siendo tu rol en " + co + " tenés mil cosas en el día a día. Por eso voy directo: Humand centraliza RRHH, comunicación interna y cultura en una sola app mobile.\n\nEmpresas como " + refs + " ya lo usan. 4.9/5 en app stores.\n\n¿20 min esta semana para mostrártelo?",
+        "Hola " + n + ", ¿cómo estás?\n\nTe escribo desde Humand. Somos la plataforma que usan empresas como " + refs + " para conectar a todo su equipo — desde oficina hasta campo — en una sola app.\n\nCon " + co + " creo que podemos hacer una diferencia real en cómo llega la información y se gestionan los procesos de personas.\n\n¿Cuándo te queda bien para una demo de 20 min?",
+        "Hola " + n + ",\n\nInvestigando sobre " + co + " vi que tienen un equipo grande. En Humand trabajamos exactamente con empresas de ese tamaño ayudándolas con comunicación interna, onboarding digital y gestión de RRHH.\n\n" + ref + " redujo un 30% las consultas repetitivas a RRHH después de implementarnos.\n\n¿Te interesa saber cómo? 20 min sin compromiso.",
+        "Hola " + n + ", ¿cómo estás?\n\nSoy de Humand, una plataforma todo-en-uno de gestión de personas. Vi que estás en " + co + " y quise escribirte directamente.\n\nHoy tenemos +1.500 empresas clientes, 1.6M de usuarios activos y un rating de 4.9/5. Empresas como " + ref + " ya confían en nosotros.\n\n¿Tenés 20 min esta semana para conocernos?",
       ],
-      followup: [
-        "Hola " + n + ", ¿cómo estás? Te escribo porque intenté contactarte por LinkedIn pero no tuve suerte.\n\nSé que en " + co + " gestionar al equipo no es fácil, y creo que Humand puede simplificarlo mucho.\n\n¿Tendrás 20 min este viernes?",
-        "Hola " + n + ", ayer intenté llamarte pero no logré dar contigo.\n\nEn " + co + " Humand puede ayudar a que la info llegue a todos sin depender del correo y que los procesos de RRHH dejen de ser manuales.\n\n¿Agendamos algo breve?",
-        "Hola " + n + ",\n\nEntiendo que no es el momento. Si en " + co + " surge la necesidad de mejorar comunicación interna o digitalizar RRHH, me encantaría ser la primera persona que contactes.\n\n¡Mucho éxito!",
+      followup_1: [
+        "Hola " + n + ", ¿cómo estás? Te escribo porque intenté contactarte por LinkedIn pero no tuve suerte.\n\nSé que en " + co + " gestionar a todo el equipo desde un solo lugar no es tarea fácil, y creo que Humand puede hacer eso mucho más simple. Por tu rol sé que puede ayudarles desde la comunicación interna, reclutamiento y hasta los procesos de RRHH del día a día.\n\n¿Tendrás 20 minutos este viernes para conocer lo que hacemos, sin ningún compromiso?",
+        "Hola " + n + ", ¿cómo vas? Ayer intenté llamarte pero no logré dar contigo.\n\nSolo quería contarte que en " + co + ", con el tamaño de equipo que tienen, Humand puede ayudar a que la información llegue a todos sin depender del correo, que los procesos de RRHH dejen de ser manuales y que cada colaborador tenga todo lo que necesita en el celular.\n\n¿Agendamos algo breve esta semana o la próxima para que lo conozcas?",
+        "Hola " + n + ",\n\nTe había escrito hace unos días sobre Humand. Entiendo que las agendas están complicadas.\n\nTe dejo un dato rápido: empresas del sector " + ind + " que usan Humand logran reducir un 34% el tiempo en que los colaboradores reciben información clave.\n\n¿Te sirve una llamada de 15 min esta semana?",
+        "Hola " + n + ", ¿todo bien?\n\nRetomo mi mensaje anterior. Quería compartirte que " + ref + " implementó Humand y en 3 meses logró un 82% de adopción entre sus colaboradores.\n\nPara " + co + " esto podría significar menos correos, menos procesos manuales y más tiempo para lo estratégico.\n\n¿Coordinamos una demo rápida?",
+        "Hola " + n + ",\n\nSé que el día a día no para, así que voy directo: Humand ayuda a empresas como " + co + " a centralizar RRHH, comunicación y cultura en una app.\n\nNuestros clientes ahorran ~5 horas por empleado por semana. ¿Vale la pena 20 min para verlo?",
+        "Hola " + n + ", ¿cómo estás?\n\nTe escribo de nuevo porque realmente creo que Humand puede sumarle mucho a " + co + ". No es solo una app de RRHH — es la forma en que +1.500 empresas conectan con cada uno de sus colaboradores.\n\n¿Qué te parece si agendamos algo breve? Me adapto a tu agenda.",
+      ],
+      followup_2: [
+        "Hola " + n + ",\n\nÚltimo intento antes de dejarte en paz :)\n\nSolo quería que supieras que empresas con +1.500 colaboradores recuperan la inversión en Humand en promedio en 6 meses, además de ahorrar ~5 horas por empleado por semana.\n\nSi en " + co + " tienen desafíos con comunicación interna, onboarding o gestión de RRHH, creo que vale la pena que hablemos.\n\n¿15 min esta semana?",
+        "Hola " + n + ",\n\nSé que probablemente estás a mil. Te dejo un dato por si te sirve: el 82% de los empleados que descargan Humand la siguen usando activamente. Eso habla de una herramienta que realmente resuelve.\n\nSi en algún momento querés verla, acá estoy. ¿Te queda algún hueco esta semana?",
+        "Hola " + n + ",\n\nNo quiero ser insistente, pero tampoco quiero que " + co + " se pierda algo que realmente puede ayudarles.\n\nHumand centraliza +30 módulos de RRHH en una app. 4.9/5 estrellas. 1.6M de usuarios activos.\n\n¿20 min para verlo? Prometo que vale la pena.",
+      ],
+      last_fup: [
+        "Hola " + n + ",\n\nEntiendo que quizás no es el momento indicado.\n\nSi en algún momento en " + co + " surge la necesidad de mejorar comunicación interna, digitalizar procesos de RRHH o mejorar la experiencia del colaborador, me encantaría ser la primera persona que contactes.\n\nQuedo disponible cuando lo necesites.\n\n¡Mucho éxito!",
+        "Hola " + n + ",\n\nNo quiero seguir llenándote la casilla. Solo quería dejarte saber que si en " + co + " necesitan mejorar la gestión de personas, Humand está listo para ayudar.\n\nTe dejo mi contacto por si en el futuro quieren evaluarnos. ¡Éxitos con todo!",
+        "Hola " + n + ",\n\nÚltimo mensaje, lo prometo :)\n\nSi alguna vez " + co + " necesita centralizar comunicación, RRHH y cultura en un solo lugar, pensá en Humand. Acá estaremos.\n\n¡Mucho éxito!",
       ],
     },
     whatsapp: {
       first: [
-        "Hola " + n + "! ¿Cómo estás? Te escribe BDR de Humand.\n\nMe disculpo si es tu teléfono personal, pero no pude contactarte por email.\n\nDesde Humand quisiéramos darnos a conocer con " + co + " a través de una demo personalizada de nuestra app que centraliza RRHH, comunicación interna y cultura.\n\n¿Qué tal el próximo lunes o martes por la tarde?",
-        "Hola " + n + "! Soy de Humand 👋\n\nVi que estás en " + co + ". Humand centraliza todo: comunicación, RRHH, onboarding, cultura. Desde el celular.\n\nEmpresas como " + refs + " ya la usan. ¿Te muestro en 20 min?",
-        "Hola " + n + "! Buen día! Te pasé un mensaje, supongo que estabas a full.\n\nEmpresas del sector de " + co + " que usan Humand logran un 34% más rápido en comunicación y 300% más engagement.\n\n¿El jueves o viernes tendrías 20 min?",
+        "Hola " + n + "! ¿Cómo estás? Te escribe BDR de Humand.\n\nNo quisiera molestarte y desde ya me disculpo si este es por casualidad tu teléfono personal, pero me contacto por este medio ya que no pude contactarte por email.\n\nTe escribo porque desde Humand quisiéramos darnos a conocer con " + co + " a través de una demo personalizada de nuestra app que centraliza y simplifica todos los procesos de gestión de RRHH, comunicación interna, y cultura empresarial.\n\n¿Qué tal te queda el próximo lunes o martes por la tarde?\n\nQuedo a disposición y espero que tengas un lindo día!",
+        "Hola " + n + "! Soy de Humand 👋\n\nTe escribo porque vi que estás en " + co + " y creo que lo que hacemos puede interesarte mucho.\n\nHumand es una app que centraliza todo: comunicación interna, RRHH, onboarding, cultura. Todo desde el celular, para que la info llegue a cada colaborador.\n\nEmpresas como " + refs + " ya la usan. ¿Te copa si te muestro en 20 min?",
+        "Hola " + n + "! ¿Cómo va todo? Te escribe BDR de Humand.\n\nQuería presentarte nuestra plataforma que ayuda a empresas como " + co + " a conectar con todos sus colaboradores en una sola app.\n\n+1.500 empresas ya la usan, con 4.9/5 en las stores.\n\n¿Tenés 20 min esta semana para una demo rápida? Sin compromiso 😊",
+        "Hola " + n + "! Soy de Humand. Vi tu perfil y quise escribirte directamente.\n\nEn " + co + " con el equipo que tienen, Humand puede simplificar mucho la gestión de personas: comunicación, vacaciones, evaluaciones, onboarding, todo en una app.\n\n¿Te parece si agendamos algo breve? Me adapto a tu agenda.",
+        "Hola " + n + "! 👋 Te escribo desde Humand.\n\nSabemos que en " + ind + " gestionar personas distribuidas es un desafío. Humand lo resuelve con una app que llega a cada colaborador, tenga o no computadora.\n\n" + refs + " ya confían en nosotros. ¿20 min para conocernos?",
       ],
-      followup: [
-        n + ", buen día! Te dejo un dato: empresas con +1.500 colaboradores recuperan la inversión en Humand en 3 meses, además de ahorrar 3h por empleado por semana.\n\n¿Podríamos juntarnos unos minutos este viernes?",
-        "Hola " + n + ", solo quería dejarte saber que si en algún momento quieren mejorar la experiencia de sus colaboradores en " + co + ", acá estaré.\n\n¡Mucho éxito! 😊",
+      followup_1: [
+        "Hola " + n + "! Buen día! Ayer te pasé un mensaje, supongo que estabas a full.\n\nQuisiera mostrarte cómo estamos ayudando a empresas como " + refs + " a centralizar toda su gestión de personas en una sola plataforma.\n\nEmpresas del sector de " + co + " que usan Humand logran reducir un 34% el tiempo en que los colaboradores reciben información y un 300% más de engagement interno.\n\nPor tu rol estoy casi segura que podría interesarte ¿El jueves o viernes tendrías unos 20 min?",
+        n + ", buen día! Ayer no sé si pudiste ver mi mensaje, te dejo un dato que suele llamar la atención:\n\nEmpresas con +1.500 colaboradores recuperan la inversión en Humand en promedio en solo 3 meses, además de ahorrar 3 horas por empleado por semana.\n\nSi en " + co + " tienen desafíos con comunicación interna, onboarding o gestión de RRHH distribuida, creo que vale la pena que hablemos.\n\n¿Podríamos juntarnos unos minutos este próximo viernes?",
+        "Hola " + n + "! Te escribo de nuevo porque realmente creo que Humand le puede sumar mucho a " + co + ".\n\n82% de adopción promedio. 4.9/5 en stores. +1.500 empresas.\n\n¿Unos minutos esta semana? 😊",
+        n + "! Retomo mi mensaje de ayer. Sé que las agendas están complicadas.\n\nTe cuento rápido: Humand centraliza +30 módulos de gestión de personas en una sola app. Empresas como " + refs + " ya la usan.\n\n¿Te sirve una llamada corta esta semana?",
+      ],
+      last_fup: [
+        "Hola " + n + ",\n\nSolo quería dejarte saber que si en algún momento quieren mejorar la experiencia de sus colaboradores en " + co + ", acá estaré.\n\n¡Mucho éxito con todo! 😊",
+        n + ", no quiero ser pesada 😊 Solo dejarte mi contacto por si en " + co + " necesitan algo de gestión de personas. Humand puede ayudar.\n\n¡Éxitos!",
+        "Hola " + n + "! Último mensaje, lo prometo.\n\nSi alguna vez necesitan centralizar la comunicación y RRHH en " + co + ", buscá Humand. Acá estaremos 💙\n\n¡Mucho éxito!",
       ],
     },
     linkedin: {
       first: [
+        "",
         "Hola " + n + ", me encantaría conectar y saber más sobre tu rol en " + co + ". ¡Saludos!",
-        "Gracias por aceptar, " + n + "!\n\nTrabajo en Humand, una plataforma que centraliza gestión de personas: reclutamiento, onboarding, vacaciones, desempeño, comunicación interna.\n\nVi tu perfil y sé que podría interesarte. ¿Coordinamos una demo breve?",
-        "Hola " + n + ", ¡gracias por conectar! 😊\n\nHumand centraliza gestión de personas y comunicación interna en una app desde el celular.\n\nEmpresas como " + refs + " ya la usan. Creo que puede sumarle a " + co + ".\n\n¿Unos minutos la próxima semana?",
+        n + ", vi tu perfil y me pareció muy interesante tu trayectoria en " + co + ". ¿Conectamos?",
+        "Hola " + n + "! Trabajo en Humand y creo que podemos tener mucho en común. ¡Un gusto!",
+        n + ", me encantaría estar en contacto. Trabajo con empresas de " + ind + " en temas de gestión de personas.",
       ],
-      followup: [
-        n + ", ¿cómo va todo? Te había escrito sobre Humand. Solo quería retomar — creo que para " + co + " puede ser útil. ¿15 min esta semana?",
+      followup_1: [
+        "Gracias por aceptar mi conexión, " + n + "!\n\nTe cuento que trabajo en Humand, una plataforma que centraliza la gestión de personas: reclutamiento, onboarding, vacaciones, desempeño y comunicación interna, todo en un solo lugar.\n\nEstaba viendo tu perfil y sé que podría interesarte. Me gustaría darnos a conocer con " + co + ". ¿Sería genial coordinar una breve demo para mostrarte cómo estamos ayudando a empresas similares? ¿Te parece para la semana que viene?",
+        "Hola " + n + ", ¡gracias por conectar! 😊\n\nTe escribo porque quería presentarles Humand, una plataforma que centraliza toda la gestión de personas, reclutamiento y comunicación interna en una sola app desde el celular.\n\nEmpresas como " + ref + " ya la usan y han reducido un 34% el tiempo en que la info llega a todos los colaboradores. Creo que puede sumarle mucho al equipo de " + co + ".\n\n¿Tendrías unos minutos la próxima semana para que te la muestre? Sin compromiso, es solo para que nos tengan en cuenta cuando llegue el momento adecuado!",
+        n + ", gracias por la conexión!\n\nTrabajo en Humand — la plataforma de gestión de personas que usan +1.500 empresas como " + ref + ".\n\nVi que estás en " + co + " y creo que lo que hacemos puede resonarte mucho. ¿Te interesa una demo corta de 15 min?",
+        "Hola " + n + "! Qué bueno conectar.\n\nDesde Humand ayudamos a empresas de " + ind + " a digitalizar toda la experiencia del colaborador: comunicación, RRHH, cultura, todo en una app.\n\n82% de adopción promedio y 4.9/5 en stores. ¿Unos minutos para contarte más?",
+        n + ", ¡gracias por aceptar!\n\nQuería compartirte algo rápido: Humand es la plataforma que empresas como " + ref + " usan para conectar a todos sus colaboradores en un solo lugar.\n\nPor tu rol en " + co + ", creo que te puede interesar mucho. ¿Agendamos algo breve?",
+      ],
+      followup_2: [
+        n + ", ¿cómo va todo? Te había escrito hace unos días sobre Humand.\n\nSolo quería retomar — creo que para " + co + " puede ser muy útil. ¿Te parece si coordinamos 15 min esta semana?",
+        "Hola " + n + "! Sé que LinkedIn a veces es un mar de mensajes. Retomo brevemente: Humand centraliza RRHH y comunicación en una app. +1.500 empresas la usan.\n\n¿Te interesa saber más?",
+        n + ", último mensaje por acá. Si en algún momento " + co + " necesita mejorar comunicación interna o gestión de personas, pensá en Humand. Acá estaremos 😊",
+      ],
+      last_fup: [
         n + ", último mensaje por acá. Si en algún momento " + co + " necesita mejorar comunicación interna o gestión de personas, pensá en Humand. Acá estaremos 😊",
       ],
     },
   };
+
   const ch = banks[tplChannel] || banks.email;
-  const tp = ch[tplType] || ch.first;
-  return tp;
+  const tp = ch[tplType] || ch.first || [];
+  return { subjects: subjects, bodies: tp };
+}
+
+// ── TYPE BUTTON DEFINITIONS ──────────────────────────────────────
+const TYPE_OPTIONS = [
+  { id: "first", label: "Primer contacto", emoji: "🚀" },
+  { id: "followup_1", label: "Seguimiento 1", emoji: "🔄" },
+  { id: "followup_2", label: "Seguimiento 2", emoji: "🔄" },
+  { id: "followup_3", label: "Seguimiento 3", emoji: "🔄" },
+  { id: "last_fup", label: "Último FUP", emoji: "👋" },
+];
+
+const LINKEDIN_TYPE_OPTIONS = [
+  { id: "first", label: "Request conexión", emoji: "🤝" },
+  { id: "followup_1", label: "Post-conexión", emoji: "💬" },
+  { id: "followup_2", label: "Seguimiento", emoji: "🔄" },
+  { id: "last_fup", label: "Último", emoji: "👋" },
+];
+
+function renderTypeButtons() {
+  const opts = tplChannel === "linkedin" ? LINKEDIN_TYPE_OPTIONS : TYPE_OPTIONS;
+  const container = document.getElementById("tpl-type-container");
+  container.innerHTML = "";
+  opts.forEach(function(t) {
+    const btn = document.createElement("button");
+    btn.className = "tpl-type-btn";
+    btn.id = "tpl-type-" + t.id;
+    btn.onclick = function() { setTplType(t.id); };
+    btn.style.cssText = "padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:#f7f7f7;color:var(--text)";
+    btn.textContent = t.emoji + " " + t.label;
+    container.appendChild(btn);
+  });
+  // highlight the active type
+  highlightTypeButton();
+}
+
+function highlightTypeButton() {
+  document.querySelectorAll(".tpl-type-btn").forEach(function(b) {
+    b.style.background = "#f7f7f7";
+    b.style.color = "var(--text)";
+  });
+  const activeBtn = document.getElementById("tpl-type-" + tplType);
+  if (activeBtn) {
+    if (tplType === "first") {
+      activeBtn.style.background = "var(--blue)";
+    } else if (tplType === "last_fup") {
+      activeBtn.style.background = "#6b7280";
+    } else {
+      activeBtn.style.background = "#f59e0b";
+    }
+    activeBtn.style.color = "white";
+  }
 }
 
 function renderTemplate() {
-  const tpls = getTemplates();
-  const tpl = tpls[tplIdx % tpls.length] || "";
+  const bank = getTemplates();
+  const bodies = bank.bodies;
+  const subjects = bank.subjects;
+  const tpl = bodies[tplIdx % bodies.length] || "";
+  const subj = subjects[tplIdx % subjects.length] || "";
+
   document.getElementById("tpl-body").value = tpl;
-  document.getElementById("tpl-counter").textContent = "Template " + ((tplIdx % tpls.length) + 1) + " de " + tpls.length;
-  // Active buttons
-  document.querySelectorAll(".tpl-ch-btn").forEach(b => b.style.background = "#f7f7f7");
-  document.getElementById("tpl-ch-" + tplChannel).style.background = tplChannel === "email" ? "var(--blue)" : tplChannel === "whatsapp" ? "#25d366" : "var(--li)";
-  document.getElementById("tpl-ch-" + tplChannel).style.color = "white";
-  document.querySelectorAll(".tpl-type-btn").forEach(b => { b.style.background = "#f7f7f7"; b.style.color = "var(--text)"; });
-  document.getElementById("tpl-type-" + tplType).style.background = tplType === "first" ? "var(--blue)" : "#f59e0b";
-  document.getElementById("tpl-type-" + tplType).style.color = "white";
+  document.getElementById("tpl-counter").textContent = "Template " + ((tplIdx % bodies.length) + 1) + " de " + bodies.length;
+
+  // Subject field — show only for email
+  const subjRow = document.getElementById("tpl-subject-row");
+  const subjInput = document.getElementById("tpl-subject");
+  if (tplChannel === "email") {
+    subjRow.style.display = "block";
+    subjInput.value = subj;
+  } else {
+    subjRow.style.display = "none";
+    subjInput.value = "";
+  }
+
+  // Active channel buttons
+  document.querySelectorAll(".tpl-ch-btn").forEach(function(b) {
+    b.style.background = "#f7f7f7";
+    b.style.color = "var(--text)";
+  });
+  var chBtn = document.getElementById("tpl-ch-" + tplChannel);
+  if (chBtn) {
+    chBtn.style.background = tplChannel === "email" ? "var(--blue)" : tplChannel === "whatsapp" ? "#25d366" : "var(--li)";
+    chBtn.style.color = "white";
+  }
+
+  highlightTypeButton();
 }
 
 function copyTemplate() {
   const body = document.getElementById("tpl-body").value;
-  navigator.clipboard.writeText(body).then(() => {
+  const subj = document.getElementById("tpl-subject").value;
+  const full = tplChannel === "email" && subj ? "Asunto: " + subj + "\n\n" + body : body;
+  navigator.clipboard.writeText(full).then(function() {
     const btn = document.getElementById("tpl-copy-btn");
     btn.textContent = "✓ Copiado!";
     btn.style.background = "var(--green)";
-    setTimeout(() => { btn.textContent = "📋 Copiar"; btn.style.background = "var(--blue)"; }, 2000);
+    setTimeout(function() { btn.textContent = "📋 Copiar"; btn.style.background = "var(--blue)"; }, 2000);
   });
 }
 </script>
 
 <!-- TEMPLATES MODAL -->
 <div id="tpl-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeTemplates()">
-  <div style="background:white;border-radius:16px;max-width:600px;width:100%;max-height:85vh;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:14px;box-shadow:0 24px 80px rgba(0,0,0,0.2)">
+  <div style="background:white;border-radius:16px;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:14px;box-shadow:0 24px 80px rgba(0,0,0,0.2)">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <h3 style="font-size:16px;font-weight:700">✉️ Templates de prospección</h3>
       <button onclick="closeTemplates()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted)">×</button>
@@ -463,15 +673,23 @@ function copyTemplate() {
 
     <div>
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Tipo</div>
-      <div style="display:flex;gap:6px">
-        <button class="tpl-type-btn" id="tpl-type-first" onclick="setTplType('first')" style="padding:7px 14px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:var(--blue);color:white">🚀 Primer contacto</button>
-        <button class="tpl-type-btn" id="tpl-type-followup" onclick="setTplType('followup')" style="padding:7px 14px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:#f7f7f7;color:var(--text)">🔄 Seguimiento</button>
+      <div id="tpl-type-container" style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="tpl-type-btn" id="tpl-type-first" onclick="setTplType('first')" style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:var(--blue);color:white">🚀 Primer contacto</button>
+        <button class="tpl-type-btn" id="tpl-type-followup_1" onclick="setTplType('followup_1')" style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:#f7f7f7;color:var(--text)">🔄 Seguimiento 1</button>
+        <button class="tpl-type-btn" id="tpl-type-followup_2" onclick="setTplType('followup_2')" style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:#f7f7f7;color:var(--text)">🔄 Seguimiento 2</button>
+        <button class="tpl-type-btn" id="tpl-type-followup_3" onclick="setTplType('followup_3')" style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:#f7f7f7;color:var(--text)">🔄 Seguimiento 3</button>
+        <button class="tpl-type-btn" id="tpl-type-last_fup" onclick="setTplType('last_fup')" style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:#f7f7f7;color:var(--text)">👋 Último FUP</button>
       </div>
     </div>
 
     <div id="tpl-counter" style="font-size:11px;color:var(--muted)">Template 1 de 1</div>
 
-    <textarea id="tpl-body" style="width:100%;min-height:200px;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;resize:vertical;line-height:1.6;outline:none" placeholder="Seleccioná canal y tipo..."></textarea>
+    <div id="tpl-subject-row" style="display:block">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Asunto</div>
+      <input id="tpl-subject" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none" placeholder="Asunto del correo...">
+    </div>
+
+    <textarea id="tpl-body" style="width:100%;min-height:220px;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;resize:vertical;line-height:1.6;outline:none" placeholder="Seleccioná canal y tipo..."></textarea>
 
     <div style="display:flex;gap:8px">
       <button onclick="regenerateTemplate()" style="padding:10px 16px;border:1px solid var(--blue);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;background:white;color:var(--blue)">🔄 Regenerar</button>
