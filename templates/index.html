@@ -411,9 +411,10 @@ function renderDataToHtml(source, data) {
       if (isHS) btns += '<a class="btn-3d btn-hs" href="' + hsLink(c.name) + '" target="_blank">H HubSpot</a>';
       btns += '<a class="btn-3d btn-li" href="' + liLink(c.name) + '" target="_blank">in LinkedIn</a>';
       if (isLusha) btns += '<a class="btn-3d btn-lusha" href="https://app.lusha.com/search?q=' + encodeURIComponent(c.name) + '" target="_blank">L Lusha</a>';
-      return '<tr><td><input type="checkbox" ' + checked + ' onchange="toggleListItem(' + i + ')" style="accent-color:var(--blue);margin-right:6px"><strong>' + c.name + '</strong>' + sourceBadges(c) + '</td><td>' + (c.country||"") + '</td><td>' + (c.industry||"") + '</td><td>' + (c.employees||0).toLocaleString() + '</td><td>' + (c.source_label||"—") + '</td><td><div class="btns">' + btns + '</div></td></tr>';
+      const pipeline = (c.source === "lusha" && !c.deal_stage) ? '<span style="color:var(--muted);font-size:11px;font-style:italic">Por cargar a HS</span>' : stageBadge(c.deal_stage || c.source_label);
+      return '<tr><td><input type="checkbox" ' + checked + ' onchange="toggleListItem(' + i + ')" style="accent-color:var(--blue);margin-right:6px"><strong>' + c.name + '</strong>' + sourceBadges(c) + '</td><td>' + (c.country||"") + '</td><td>' + (c.industry||"") + '</td><td>' + (c.employees||0).toLocaleString() + '</td><td>' + pipeline + '</td><td><div class="btns">' + btns + '</div></td></tr>';
     }).join("");
-    return listBar + '<div class="table-card"><div class="table-header" style="background:var(--blue)"><span>📋 Todas las empresas (HubSpot + Lusha)</span><span class="count">' + data.length + '</span></div><table><thead><tr>' + sortableHeader("Empresa","name") + sortableHeader("País","country") + sortableHeader("Industria","industry") + sortableHeader("Empleados","employees") + '<th>Fuente</th><th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    return listBar + '<div class="table-card"><div class="table-header" style="background:var(--blue)"><span>📋 Todas las empresas (HubSpot + Lusha)</span><span class="count">' + data.length + '</span></div><table><thead><tr>' + sortableHeader("Empresa","name") + sortableHeader("País","country") + sortableHeader("Industria","industry") + sortableHeader("Empleados","employees") + sortableHeader("Etapa pipeline","deal_stage") + '<th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
 
   if (source === "recycling" || source === "inactive") {
