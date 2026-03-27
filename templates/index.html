@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BDRs Intelligence — Humand</title>
+<style>
+  :root { --blue: #0693E3; --dark: #1a1a2e; --text: #2d3748; --muted: #717171; --bg: #F7F7F7; --white: #fff; --border: #e2e8f0; --hs: #ff5c35; --lusha: #6c47ff; --li: #0a66c2; --green: #16a34a; --red: #ef4444; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "SF UI", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; }
+
+  /* Header */
+  .header { background: var(--white); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo { width: 36px; height: 36px; background: var(--blue); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 16px; }
+  .header h1 { font-size: 18px; font-weight: 700; color: var(--dark); }
+  .header p { font-size: 12px; color: var(--muted); }
+  .badges { display: flex; gap: 8px; }
+  .badge-hs { background: #fff1ed; color: var(--hs); border: 1px solid rgba(255,92,53,0.25); padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .badge-lusha { background: #f3eeff; color: var(--lusha); border: 1px solid rgba(108,71,255,0.25); padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+
+  /* Layout */
+  .main { display: flex; flex: 1; overflow: hidden; }
+
+  /* Sidebar */
+  .sidebar { width: 240px; background: var(--white); border-right: 1px solid var(--border); padding: 20px 16px; overflow-y: auto; flex-shrink: 0; }
+  .section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .section-label .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .nav-btn { display: block; width: 100%; text-align: left; padding: 10px 12px; border: none; border-radius: 10px; font-size: 13px; font-weight: 500; color: var(--text); background: none; cursor: pointer; margin-bottom: 4px; transition: all 0.15s; }
+  .nav-btn:hover { background: var(--bg); }
+  .nav-btn.active-hs { background: var(--hs); color: white; font-weight: 600; }
+  .nav-btn.active-lusha { background: var(--lusha); color: white; font-weight: 600; }
+  .nav-btn.active-won { background: var(--green); color: white; font-weight: 600; }
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+  .filter-label { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 4px; display: block; }
+  .filter-select { width: 100%; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 12px; background: var(--white); color: var(--text); outline: none; margin-bottom: 12px; }
+  .filter-select:focus { border-color: var(--blue); }
+  .apply-btn { width: 100%; padding: 10px; background: var(--blue); color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 4px; }
+  .apply-btn:hover { opacity: 0.9; }
+  .clear-btn { width: 100%; padding: 8px; background: none; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; color: var(--muted); cursor: pointer; margin-top: 8px; }
+
+  /* Content */
+  .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* Search bar */
+  .search-bar { padding: 16px 24px; background: var(--white); border-bottom: 1px solid var(--border); display: flex; gap: 10px; }
+  .search-input { flex: 1; padding: 10px 16px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; outline: none; font-family: inherit; }
+  .search-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(6,147,227,0.1); }
+  .search-input::placeholder { color: #a9a9a9; }
+  .search-btn { padding: 10px 20px; background: var(--blue); color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+  /* Results area */
+  .results { flex: 1; overflow-y: auto; padding: 24px; }
+
+  /* Empty state */
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--muted); text-align: center; }
+  .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-state h3 { font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  .empty-state p { font-size: 14px; max-width: 400px; line-height: 1.6; }
+
+  /* AI answer */
+  .ai-answer { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); font-size: 14px; line-height: 1.6; }
+  .ai-answer strong { color: var(--blue); }
+
+  /* Table */
+  .table-card { background: var(--white); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .table-header { padding: 12px 16px; color: white; font-size: 13px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+  .table-header.hs { background: var(--hs); }
+  .table-header.lusha { background: var(--lusha); }
+  .table-header.won { background: var(--green); }
+  .table-header .count { background: rgba(255,255,255,0.25); padding: 2px 10px; border-radius: 10px; font-size: 11px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: #f8fafc; padding: 10px 14px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); border-bottom: 1px solid var(--border); }
+  td { padding: 10px 14px; border-bottom: 1px solid #f0f4f8; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f8faff; }
+
+  /* Badges */
+  .stage-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; }
+  .stage-recycling { background: #fef3c7; color: #92400e; }
+  .stage-inactive { background: #fee2e2; color: #991b1b; }
+  .stage-won { background: #d1fae5; color: #065f46; }
+  .stage-demo { background: #dbeafe; color: #1e40af; }
+  .stage-discovery { background: #ede9fe; color: #4c1d95; }
+  .stage-lead { background: #f3f4f6; color: #374151; }
+  .new-badge { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-left: 6px; }
+  .days-badge { color: var(--red); font-size: 11px; font-weight: 600; }
+
+  /* 3D Buttons */
+  .btn-3d { display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: 700; text-decoration: none; cursor: pointer; border: none; color: white; transition: all 0.1s; }
+  .btn-3d:active { transform: translateY(2px); box-shadow: none !important; }
+  .btn-hs { background: linear-gradient(to bottom, #ff8f6b, #ff5c35); box-shadow: 0 2px 0 #cc4a2a, 0 3px 6px rgba(255,92,53,0.3); }
+  .btn-hs:hover { transform: translateY(1px); box-shadow: 0 1px 0 #cc4a2a; }
+  .btn-li { background: linear-gradient(to bottom, #0d7fd4, #0a66c2); box-shadow: 0 2px 0 #084f96, 0 3px 6px rgba(10,102,194,0.3); }
+  .btn-li:hover { transform: translateY(1px); box-shadow: 0 1px 0 #084f96; }
+  .btn-lusha { background: linear-gradient(to bottom, #8b6fff, #6c47ff); box-shadow: 0 2px 0 #5535cc, 0 3px 6px rgba(108,71,255,0.3); }
+  .btn-lusha:hover { transform: translateY(1px); box-shadow: 0 1px 0 #5535cc; }
+  .btn-green { background: linear-gradient(to bottom, #22c55e, #16a34a); box-shadow: 0 2px 0 #128a3e, 0 3px 6px rgba(22,163,74,0.3); }
+  .btn-green:hover { transform: translateY(1px); box-shadow: 0 1px 0 #128a3e; }
+  .btns { display: flex; gap: 5px; flex-wrap: wrap; }
+
+  /* Contact card */
+  .contact-card { font-size: 12px; margin-bottom: 6px; }
+  .contact-name { font-weight: 600; color: var(--text); }
+  .contact-title { color: var(--lusha); font-weight: 500; font-size: 11px; }
+  .contact-email { color: var(--muted); font-size: 11px; }
+  .contact-note { color: var(--muted); font-size: 10px; font-style: italic; margin-top: 2px; }
+
+  /* Stats card */
+  .stats-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-top: 16px; }
+  .stats-card h4 { font-size: 14px; font-weight: 700; margin-bottom: 12px; color: var(--text); }
+  .stat-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f0f4f8; font-size: 13px; }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-label { color: var(--text); font-weight: 500; }
+  .stat-value { color: var(--blue); font-weight: 700; }
+
+  .loading { text-align: center; padding: 40px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="logo">H</div>
+    <div>
+      <h1>BDRs Intelligence</h1>
+      <p>HubSpot + Lusha conectados</p>
+    </div>
+  </div>
+  <div class="badges">
+    <span class="badge-hs">🟠 HubSpot</span>
+    <span class="badge-lusha">🟣 Lusha</span>
+  </div>
+</div>
+
+<div class="main">
+  <div class="sidebar">
+    <!-- All -->
+    <div class="section-label" style="color:var(--blue)"><span class="dot" style="background:var(--blue)"></span> Vista general</div>
+    <button class="nav-btn" onclick="loadSource('all')" id="btn-all">📋 Todas las empresas</button>
+
+    <div class="divider"></div>
+
+    <!-- HubSpot -->
+    <div class="section-label" style="color:var(--hs)"><span class="dot" style="background:var(--hs)"></span> HubSpot</div>
+    <button class="nav-btn" onclick="loadSource('recycling')" id="btn-recycling">♻️ Recycling</button>
+    <button class="nav-btn" onclick="loadSource('inactive')" id="btn-inactive">⏱️ +45d inactivas</button>
+    <button class="nav-btn" onclick="loadSource('won')" id="btn-won">🏆 Clientes (Won)</button>
+
+    <div class="divider"></div>
+
+    <!-- Lusha -->
+    <div class="section-label" style="color:var(--lusha)"><span class="dot" style="background:var(--lusha)"></span> Lusha</div>
+    <button class="nav-btn" onclick="loadSource('lusha_new')" id="btn-lusha_new">✨ Nuevas cuentas</button>
+    <button class="nav-btn" onclick="loadSource('lusha_roles')" id="btn-lusha_roles">👤 Nuevos roles C-Level RRHH</button>
+
+    <div class="divider"></div>
+
+    <!-- Filters -->
+    <div class="section-label" style="color:var(--muted)"><span class="dot" style="background:var(--muted)"></span> Filtros</div>
+    <label class="filter-label">País</label>
+    <select class="filter-select" id="f-country"><option value="">Todos</option></select>
+
+    <label class="filter-label">Industria</label>
+    <select class="filter-select" id="f-industry"><option value="">Todas</option></select>
+
+    <label class="filter-label">Tamaño empresa</label>
+    <select class="filter-select" id="f-employees">
+      <option value="">Cualquier tamaño</option>
+      <option value="1-10">1 — 10</option>
+      <option value="11-50">11 — 50</option>
+      <option value="51-200">51 — 200</option>
+      <option value="201-500">201 — 500</option>
+      <option value="501-1000">501 — 1.000</option>
+      <option value="1001-5000">1.001 — 5.000</option>
+      <option value="5001-10000">5.001 — 10.000</option>
+      <option value="10001">10.000+</option>
+    </select>
+
+    <button class="apply-btn" onclick="applyFilters()">Aplicar filtros</button>
+    <button class="clear-btn" onclick="clearAll()">Limpiar todo</button>
+  </div>
+
+  <div class="content">
+    <div class="search-bar">
+      <input class="search-input" id="search-input" placeholder="Preguntame: 'empresas nuevas con +500 empleados', 'clientes en Retail', 'qué módulos tiene Humand'..." onkeydown="if(event.key==='Enter')doSearch()">
+      <button class="search-btn" onclick="doSearch()">Buscar</button>
+    </div>
+    <div class="results" id="results">
+      <div class="empty-state">
+        <div class="icon">🎯</div>
+        <h3>Seleccioná un filtro o preguntame</h3>
+        <p>Usá los botones del panel izquierdo para ver data de HubSpot o Lusha, aplicá filtros, o escribí lo que necesitás en el buscador.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentSource = "";
+
+async function loadFilters() {
+  const res = await fetch("/api/filters");
+  const d = await res.json();
+  const cs = document.getElementById("f-country");
+  d.countries.forEach(c => { const o = document.createElement("option"); o.value = c; o.textContent = c; cs.appendChild(o); });
+  const is = document.getElementById("f-industry");
+  d.industries.forEach(i => { const o = document.createElement("option"); o.value = i; o.textContent = i; is.appendChild(o); });
+}
+
+function setActive(id) {
+  document.querySelectorAll(".nav-btn").forEach(b => b.className = "nav-btn");
+  const btn = document.getElementById("btn-" + id);
+  if (btn) {
+    if (id.startsWith("lusha")) btn.classList.add("active-lusha");
+    else if (id === "won") btn.classList.add("active-won");
+    else btn.classList.add("active-hs");
+  }
+}
+
+function getFilterParams() {
+  const p = new URLSearchParams();
+  const c = document.getElementById("f-country").value;
+  const i = document.getElementById("f-industry").value;
+  const e = document.getElementById("f-employees").value;
+  if (c) p.set("country", c);
+  if (i) p.set("industry", i);
+  if (e) p.set("employees", e);
+  return p.toString();
+}
+
+async function loadSource(source) {
+  currentSource = source;
+  setActive(source);
+  const el = document.getElementById("results");
+  el.innerHTML = '<div class="loading">Cargando...</div>';
+  const fp = getFilterParams();
+  const res = await fetch("/api/data?source=" + source + (fp ? "&" + fp : ""));
+  const data = await res.json();
+  renderData(source, data);
+}
+
+function applyFilters() {
+  if (currentSource) loadSource(currentSource);
+}
+
+function clearAll() {
+  document.getElementById("f-country").value = "";
+  document.getElementById("f-industry").value = "";
+  document.getElementById("f-employees").value = "";
+  currentSource = "";
+  document.querySelectorAll(".nav-btn").forEach(b => b.className = "nav-btn");
+  document.getElementById("results").innerHTML = '<div class="empty-state"><div class="icon">🎯</div><h3>Seleccioná un filtro o preguntame</h3><p>Usá los botones del panel izquierdo para ver data de HubSpot o Lusha, aplicá filtros, o escribí lo que necesitás en el buscador.</p></div>';
+}
+
+async function doSearch() {
+  const q = document.getElementById("search-input").value.trim();
+  if (!q) return;
+  const el = document.getElementById("results");
+  el.innerHTML = '<div class="loading">Buscando...</div>';
+  const res = await fetch("/api/search?q=" + encodeURIComponent(q));
+  const d = await res.json();
+  let html = '<div class="ai-answer">' + d.answer + '</div>';
+  if (d.data && d.data.length > 0) {
+    html += renderDataToHtml(d.type || "won", d.data);
+  }
+  el.innerHTML = html;
+}
+
+function stageBadge(stage) {
+  const cls = { "Recycling": "stage-recycling", "Won": "stage-won", "Demo": "stage-demo", "Discovery": "stage-discovery", "Lead": "stage-lead" };
+  return '<span class="stage-badge ' + (cls[stage] || "stage-lead") + '">' + (stage || "—") + '</span>';
+}
+
+function hsLink(name) { return "https://app.hubspot.com/contacts/search?query=" + encodeURIComponent(name); }
+function liLink(name) { return "https://www.linkedin.com/search/results/companies/?keywords=" + encodeURIComponent(name); }
+function liPerson(name, co) { return "https://www.linkedin.com/search/results/people/?keywords=" + encodeURIComponent(name + " " + co); }
+
+function renderDataToHtml(source, data) {
+  if (!data || !data.length) return '<div class="empty-state" style="padding:40px"><p>Sin resultados con estos filtros.</p></div>';
+
+  if (source === "recycling" || source === "inactive") {
+    const label = source === "recycling" ? "♻️ Recycling" : "⏱️ +45 días sin actividad";
+    const hdrCls = source === "recycling" ? "hs" : "hs";
+    let rows = data.map(c => '<tr><td><strong>' + c.name + '</strong></td><td>' + c.country + '</td><td>' + c.industry + '</td><td>' + (c.employees||0).toLocaleString() + '</td><td>' + stageBadge(c.deal_stage) + '</td><td><span class="days-badge">' + c.days_inactive + 'd</span></td><td><div class="btns"><a class="btn-3d btn-hs" href="' + hsLink(c.name) + '" target="_blank">H HubSpot</a><a class="btn-3d btn-li" href="' + liLink(c.name) + '" target="_blank">in LinkedIn</a></div></td></tr>').join("");
+    return '<div class="table-card"><div class="table-header ' + hdrCls + '"><span>' + label + '</span><span class="count">' + data.length + '</span></div><table><thead><tr><th>Empresa</th><th>País</th><th>Industria</th><th>Empleados</th><th>Etapa</th><th>Inactividad</th><th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
+
+  if (source === "won") {
+    let rows = data.map(c => '<tr><td><strong>' + c.name + '</strong></td><td>' + c.country + '</td><td>' + c.industry + '</td><td>' + (c.employees||0).toLocaleString() + '</td><td>Desde ' + c.since + '</td></tr>').join("");
+    return '<div class="table-card"><div class="table-header won"><span>🏆 Clientes activos (Won)</span><span class="count">' + data.length + '</span></div><table><thead><tr><th>Empresa</th><th>País</th><th>Industria</th><th>Empleados</th><th>Cliente desde</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
+
+  if (source === "lusha_new") {
+    let rows = data.map(c => {
+      let contacts = (c.contacts||[]).map(ct => '<div class="contact-card"><span class="contact-name">' + ct.name + '</span> — <span class="contact-title">' + ct.title + '</span><br><span class="contact-email">' + ct.email + '</span><div class="btns" style="margin-top:4px"><a class="btn-3d btn-li" href="' + ct.linkedin + '" target="_blank">in Perfil</a><a class="btn-3d btn-lusha" href="' + ct.lusha + '" target="_blank">L Lusha</a></div></div>').join("");
+      return '<tr><td><strong>' + c.name + '</strong><span class="new-badge">NUEVA</span></td><td>' + c.country + '</td><td>' + c.industry + '</td><td>' + (c.employees||0).toLocaleString() + '</td><td>' + contacts + '</td><td><div class="btns"><a class="btn-3d btn-li" href="' + (c.linkedin_company||liLink(c.name)) + '" target="_blank">in Empresa</a><a class="btn-3d btn-lusha" href="https://app.lusha.com/search?q=' + encodeURIComponent(c.name) + '" target="_blank">L Lusha</a><button class="btn-3d btn-green" onclick=\'openTemplates(' + JSON.stringify({name:(c.contacts&&c.contacts[0]?c.contacts[0].name:""),company:c.name,industry:c.industry,country:c.country}).replace(/'/g,"&#39;") + ')\'>✉️ Templates</button></div></td></tr>';
+    }).join("");
+    return '<div class="table-card"><div class="table-header lusha"><span>✨ Nuevas cuentas — no están en HubSpot</span><span class="count">' + data.length + '</span></div><table><thead><tr><th>Empresa</th><th>País</th><th>Industria</th><th>Empleados</th><th>Contactos</th><th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
+
+  if (source === "all") {
+    let rows = data.map(c => {
+      const isLusha = c.source === "lusha";
+      const srcBadge = isLusha ? '<span style="background:#f3eeff;color:#6c47ff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:4px">LUSHA</span>' : '<span style="background:#fff1ed;color:#ff5c35;font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:4px">HS</span>';
+      let btns = '';
+      if (!isLusha) btns += '<a class="btn-3d btn-hs" href="' + hsLink(c.name) + '" target="_blank">H HubSpot</a>';
+      btns += '<a class="btn-3d btn-li" href="' + liLink(c.name) + '" target="_blank">in LinkedIn</a>';
+      if (isLusha) btns += '<a class="btn-3d btn-lusha" href="https://app.lusha.com/search?q=' + encodeURIComponent(c.name) + '" target="_blank">L Lusha</a>';
+      return '<tr><td><strong>' + c.name + '</strong>' + srcBadge + '</td><td>' + c.country + '</td><td>' + c.industry + '</td><td>' + (c.employees||0).toLocaleString() + '</td><td>' + (c.source_label||"—") + '</td><td><div class="btns">' + btns + '</div></td></tr>';
+    }).join("");
+    return '<div class="table-card"><div class="table-header" style="background:var(--blue)"><span>📋 Todas las empresas (HubSpot + Lusha)</span><span class="count">' + data.length + '</span></div><table><thead><tr><th>Empresa</th><th>País</th><th>Industria</th><th>Empleados</th><th>Fuente</th><th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
+
+  if (source === "lusha_roles") {
+    let rows = data.map(c => {
+      let contacts = (c.contacts||[]).map(ct => '<div class="contact-card"><span class="contact-name">' + ct.name + '</span> — <span class="contact-title">' + ct.title + '</span><br><span class="contact-email">' + ct.email + '</span>' + (ct.note ? '<div class="contact-note">💡 ' + ct.note + '</div>' : '') + '<div class="btns" style="margin-top:4px"><a class="btn-3d btn-li" href="' + ct.linkedin + '" target="_blank">in Perfil</a><a class="btn-3d btn-lusha" href="' + ct.lusha + '" target="_blank">L Lusha</a></div></div>').join("");
+      return '<tr><td><strong>' + c.name + '</strong></td><td>' + c.country + '</td><td>' + c.industry + '</td><td>' + (c.employees||0).toLocaleString() + '</td><td>' + contacts + '</td><td>' + stageBadge(c.deal_stage) + '</td><td><div class="btns"><a class="btn-3d btn-hs" href="' + hsLink(c.name) + '" target="_blank">H HubSpot</a><a class="btn-3d btn-li" href="' + (c.linkedin_company||liLink(c.name)) + '" target="_blank">in Empresa</a><button class="btn-3d btn-green" onclick=\'openTemplates(' + JSON.stringify({name:c.contacts[0]?.name||"",company:c.name,industry:c.industry,country:c.country}).replace(/'/g,"&#39;") + ')\'>✉️ Templates</button></div></td></tr>';
+    }).join("");
+    return '<div class="table-card"><div class="table-header lusha"><span>👤 Nuevos roles C-Level RRHH</span><span class="count">' + data.length + '</span></div><table><thead><tr><th>Empresa</th><th>País</th><th>Industria</th><th>Empleados</th><th>Contacto</th><th>Estado CRM</th><th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
+
+  return "";
+}
+
+function renderData(source, data) {
+  const el = document.getElementById("results");
+  let html = renderDataToHtml(source, data);
+
+  // Add stats for Won
+  if (source === "won" && data.length > 0) {
+    html += '<div id="stats-container"></div>';
+    fetch("/api/stats").then(r => r.json()).then(stats => {
+      let sh = '<div class="stats-card"><h4>📊 Resumen de clientes por industria</h4>';
+      Object.entries(stats.by_industry).sort((a,b) => b[1]-a[1]).forEach(([k,v]) => {
+        sh += '<div class="stat-row"><span class="stat-label">' + k + '</span><span class="stat-value">' + v + '</span></div>';
+      });
+      sh += '</div><div class="stats-card" style="margin-top:12px"><h4>🌎 Resumen de clientes por país</h4>';
+      Object.entries(stats.by_country).sort((a,b) => b[1]-a[1]).forEach(([k,v]) => {
+        sh += '<div class="stat-row"><span class="stat-label">' + k + '</span><span class="stat-value">' + v + '</span></div>';
+      });
+      sh += '</div>';
+      document.getElementById("stats-container").innerHTML = sh;
+    });
+  }
+
+  el.innerHTML = html;
+}
+
+loadFilters();
+
+// ── TEMPLATES MODAL ──────────────────────────────────────────────
+let tplData = null;
+let tplChannel = "email";
+let tplType = "first";
+let tplIdx = 0;
+
+function openTemplates(contact) {
+  tplData = contact;
+  tplIdx = 0;
+  tplChannel = "email";
+  tplType = "first";
+  renderTemplate();
+  document.getElementById("tpl-modal").style.display = "flex";
+}
+
+function closeTemplates() { document.getElementById("tpl-modal").style.display = "none"; }
+
+function setTplChannel(ch) { tplChannel = ch; tplIdx = 0; renderTemplate(); }
+function setTplType(t) { tplType = t; tplIdx = 0; renderTemplate(); }
+function regenerateTemplate() { tplIdx++; renderTemplate(); }
+
+function getTemplates() {
+  if (!tplData) return [];
+  const n = tplData.name.split(" ")[0] || "equipo";
+  const co = tplData.company || "";
+  const ind = tplData.industry || "tu sector";
+  const country = tplData.country || "LATAM";
+  const refs = {"Colombia":"Grupo Éxito, Banco Davivienda","México":"OXXO, Bimbo","Argentina":"Swiss Medical, Tenaris","Perú":"Belcorp, Intercorp","Brasil":"MRV&CO","default":"OXXO, Swiss Medical"}[country] || "OXXO, Swiss Medical";
+
+  const banks = {
+    email: {
+      first: [
+        "Hola " + n + ", ¿cómo estás? Soy BDR de Humand. Vi tu perfil en LinkedIn y, siendo tu rol en " + co + ", creo que lo que hacemos puede ser muy relevante.\n\nHumand centraliza RRHH, comunicación interna, onboarding y cultura en una sola app desde el celular.\n\nYa trabajamos con " + refs + ", donde la info llega un 34% más rápido y redujimos un 30% las consultas a RRHH.\n\n¿Tendrías unos minutos esta semana para que te muestre cómo funciona? Sin compromiso.",
+        "Hola " + n + ",\n\nEn " + co + " sé que gestionar la comunicación interna no es fácil. En Humand ayudamos a empresas como " + refs + " a centralizar todo en una sola app.\n\nNuestros clientes ahorran ~5 horas por empleado por semana.\n\n¿20 min para mostrarte? Sin compromiso.",
+        "Hola " + n + ",\n\nSoy de Humand. Vi tu perfil en " + co + " y me llamó la atención porque trabajamos con empresas de " + ind + ".\n\n+1.500 empresas ya usan Humand. 4.9/5 en stores.\n\n¿Tenés 20 min esta semana?",
+      ],
+      followup: [
+        "Hola " + n + ", ¿cómo estás? Te escribo porque intenté contactarte por LinkedIn pero no tuve suerte.\n\nSé que en " + co + " gestionar al equipo no es fácil, y creo que Humand puede simplificarlo mucho.\n\n¿Tendrás 20 min este viernes?",
+        "Hola " + n + ", ayer intenté llamarte pero no logré dar contigo.\n\nEn " + co + " Humand puede ayudar a que la info llegue a todos sin depender del correo y que los procesos de RRHH dejen de ser manuales.\n\n¿Agendamos algo breve?",
+        "Hola " + n + ",\n\nEntiendo que no es el momento. Si en " + co + " surge la necesidad de mejorar comunicación interna o digitalizar RRHH, me encantaría ser la primera persona que contactes.\n\n¡Mucho éxito!",
+      ],
+    },
+    whatsapp: {
+      first: [
+        "Hola " + n + "! ¿Cómo estás? Te escribe BDR de Humand.\n\nMe disculpo si es tu teléfono personal, pero no pude contactarte por email.\n\nDesde Humand quisiéramos darnos a conocer con " + co + " a través de una demo personalizada de nuestra app que centraliza RRHH, comunicación interna y cultura.\n\n¿Qué tal el próximo lunes o martes por la tarde?",
+        "Hola " + n + "! Soy de Humand 👋\n\nVi que estás en " + co + ". Humand centraliza todo: comunicación, RRHH, onboarding, cultura. Desde el celular.\n\nEmpresas como " + refs + " ya la usan. ¿Te muestro en 20 min?",
+        "Hola " + n + "! Buen día! Te pasé un mensaje, supongo que estabas a full.\n\nEmpresas del sector de " + co + " que usan Humand logran un 34% más rápido en comunicación y 300% más engagement.\n\n¿El jueves o viernes tendrías 20 min?",
+      ],
+      followup: [
+        n + ", buen día! Te dejo un dato: empresas con +1.500 colaboradores recuperan la inversión en Humand en 3 meses, además de ahorrar 3h por empleado por semana.\n\n¿Podríamos juntarnos unos minutos este viernes?",
+        "Hola " + n + ", solo quería dejarte saber que si en algún momento quieren mejorar la experiencia de sus colaboradores en " + co + ", acá estaré.\n\n¡Mucho éxito! 😊",
+      ],
+    },
+    linkedin: {
+      first: [
+        "Hola " + n + ", me encantaría conectar y saber más sobre tu rol en " + co + ". ¡Saludos!",
+        "Gracias por aceptar, " + n + "!\n\nTrabajo en Humand, una plataforma que centraliza gestión de personas: reclutamiento, onboarding, vacaciones, desempeño, comunicación interna.\n\nVi tu perfil y sé que podría interesarte. ¿Coordinamos una demo breve?",
+        "Hola " + n + ", ¡gracias por conectar! 😊\n\nHumand centraliza gestión de personas y comunicación interna en una app desde el celular.\n\nEmpresas como " + refs + " ya la usan. Creo que puede sumarle a " + co + ".\n\n¿Unos minutos la próxima semana?",
+      ],
+      followup: [
+        n + ", ¿cómo va todo? Te había escrito sobre Humand. Solo quería retomar — creo que para " + co + " puede ser útil. ¿15 min esta semana?",
+        n + ", último mensaje por acá. Si en algún momento " + co + " necesita mejorar comunicación interna o gestión de personas, pensá en Humand. Acá estaremos 😊",
+      ],
+    },
+  };
+  const ch = banks[tplChannel] || banks.email;
+  const tp = ch[tplType] || ch.first;
+  return tp;
+}
+
+function renderTemplate() {
+  const tpls = getTemplates();
+  const tpl = tpls[tplIdx % tpls.length] || "";
+  document.getElementById("tpl-body").value = tpl;
+  document.getElementById("tpl-counter").textContent = "Template " + ((tplIdx % tpls.length) + 1) + " de " + tpls.length;
+  // Active buttons
+  document.querySelectorAll(".tpl-ch-btn").forEach(b => b.style.background = "#f7f7f7");
+  document.getElementById("tpl-ch-" + tplChannel).style.background = tplChannel === "email" ? "var(--blue)" : tplChannel === "whatsapp" ? "#25d366" : "var(--li)";
+  document.getElementById("tpl-ch-" + tplChannel).style.color = "white";
+  document.querySelectorAll(".tpl-type-btn").forEach(b => { b.style.background = "#f7f7f7"; b.style.color = "var(--text)"; });
+  document.getElementById("tpl-type-" + tplType).style.background = tplType === "first" ? "var(--blue)" : "#f59e0b";
+  document.getElementById("tpl-type-" + tplType).style.color = "white";
+}
+
+function copyTemplate() {
+  const body = document.getElementById("tpl-body").value;
+  navigator.clipboard.writeText(body).then(() => {
+    const btn = document.getElementById("tpl-copy-btn");
+    btn.textContent = "✓ Copiado!";
+    btn.style.background = "var(--green)";
+    setTimeout(() => { btn.textContent = "📋 Copiar"; btn.style.background = "var(--blue)"; }, 2000);
+  });
+}
+</script>
+
+<!-- TEMPLATES MODAL -->
+<div id="tpl-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeTemplates()">
+  <div style="background:white;border-radius:16px;max-width:600px;width:100%;max-height:85vh;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:14px;box-shadow:0 24px 80px rgba(0,0,0,0.2)">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3 style="font-size:16px;font-weight:700">✉️ Templates de prospección</h3>
+      <button onclick="closeTemplates()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted)">×</button>
+    </div>
+
+    <div>
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Canal</div>
+      <div style="display:flex;gap:6px">
+        <button class="tpl-ch-btn" id="tpl-ch-email" onclick="setTplChannel('email')" style="padding:7px 14px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:var(--blue);color:white">✉️ Correo</button>
+        <button class="tpl-ch-btn" id="tpl-ch-whatsapp" onclick="setTplChannel('whatsapp')" style="padding:7px 14px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:#f7f7f7;color:var(--text)">💬 WhatsApp</button>
+        <button class="tpl-ch-btn" id="tpl-ch-linkedin" onclick="setTplChannel('linkedin')" style="padding:7px 14px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:#f7f7f7;color:var(--text)">🔗 LinkedIn</button>
+      </div>
+    </div>
+
+    <div>
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Tipo</div>
+      <div style="display:flex;gap:6px">
+        <button class="tpl-type-btn" id="tpl-type-first" onclick="setTplType('first')" style="padding:7px 14px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:var(--blue);color:white">🚀 Primer contacto</button>
+        <button class="tpl-type-btn" id="tpl-type-followup" onclick="setTplType('followup')" style="padding:7px 14px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:#f7f7f7;color:var(--text)">🔄 Seguimiento</button>
+      </div>
+    </div>
+
+    <div id="tpl-counter" style="font-size:11px;color:var(--muted)">Template 1 de 1</div>
+
+    <textarea id="tpl-body" style="width:100%;min-height:200px;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;resize:vertical;line-height:1.6;outline:none" placeholder="Seleccioná canal y tipo..."></textarea>
+
+    <div style="display:flex;gap:8px">
+      <button onclick="regenerateTemplate()" style="padding:10px 16px;border:1px solid var(--blue);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;background:white;color:var(--blue)">🔄 Regenerar</button>
+      <button id="tpl-copy-btn" onclick="copyTemplate()" style="flex:1;padding:10px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;background:var(--blue);color:white">📋 Copiar</button>
+      <button onclick="closeTemplates()" style="padding:10px 16px;border:1px solid var(--border);border-radius:10px;font-size:12px;cursor:pointer;background:white;color:var(--text)">Cerrar</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
