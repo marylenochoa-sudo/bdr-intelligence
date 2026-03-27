@@ -428,14 +428,23 @@ function renderDataToHtml(source, data) {
     return listBar + '<div class="table-card"><div class="table-header" style="background:var(--blue)"><span>📋 Todas las empresas (HubSpot + Lusha)</span><span class="count">' + data.length + '</span></div><table><thead><tr>' + sortableHeader("Empresa","name") + sortableHeader("País","country") + sortableHeader("Industria","industry") + sortableHeader("Empleados","employees") + sortableHeader("Etapa pipeline","deal_stage") + '<th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
 
-  if (source === "recycling" || source === "inactive") {
-    const label = source === "recycling" ? "♻️ Recycling" : "⏱️ +45 días sin actividad";
+  if (source === "recycling") {
+    let rows = data.map((c,i) => {
+      const checked = savedList.some(s => s.name === c.name) ? "checked" : "";
+      const tplObj = JSON.stringify({name:"NOMBRE",company:c.name,industry:c.industry,country:c.country}).replace(/'/g,"&#39;");
+      const days = c.days_in_recycling || c.days_inactive || 0;
+      return '<tr><td><input type="checkbox" ' + checked + ' onchange="toggleListItem(' + i + ')" style="accent-color:var(--blue);margin-right:6px"><strong>' + c.name + '</strong></td><td>' + c.country + '</td><td>' + c.industry + '</td><td>' + (c.employees||0).toLocaleString() + '</td><td><span style="font-size:11px;color:var(--muted)">Pipeline BDR</span></td><td><span class="days-badge">' + days + 'd</span></td><td style="font-size:11px;color:var(--muted)">' + (c.entered_recycling||"—") + '</td><td><div class="btns"><a class="btn-3d btn-hs" href="' + hsLink(c.name) + '" target="_blank">H HubSpot</a><a class="btn-3d btn-li" href="' + liLink(c.name) + '" target="_blank">in LinkedIn</a><button class="btn-3d btn-green" onclick=\'openTemplates(' + tplObj + ')\'>✉️ Templates</button></div></td></tr>';
+    }).join("");
+    return listBar + '<div class="table-card"><div class="table-header hs"><span>♻️ Recycling — Pipeline BDR</span><span class="count">' + data.length + '</span></div><table><thead><tr>' + sortableHeader("Empresa","name") + sortableHeader("País","country") + sortableHeader("Industria","industry") + sortableHeader("Empleados","employees") + '<th>Pipeline</th>' + sortableHeader("Días en Recycling","days_in_recycling") + sortableHeader("Entró a Recycling","entered_recycling") + '<th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
+
+  if (source === "inactive") {
     let rows = data.map((c,i) => {
       const checked = savedList.some(s => s.name === c.name) ? "checked" : "";
       const tplObj = JSON.stringify({name:"NOMBRE",company:c.name,industry:c.industry,country:c.country}).replace(/'/g,"&#39;");
       return '<tr><td><input type="checkbox" ' + checked + ' onchange="toggleListItem(' + i + ')" style="accent-color:var(--blue);margin-right:6px"><strong>' + c.name + '</strong></td><td>' + c.country + '</td><td>' + c.industry + '</td><td>' + (c.employees||0).toLocaleString() + '</td><td>' + stageBadge(c.deal_stage) + '</td><td><span class="days-badge">' + c.days_inactive + 'd</span></td><td><div class="btns"><a class="btn-3d btn-hs" href="' + hsLink(c.name) + '" target="_blank">H HubSpot</a><a class="btn-3d btn-li" href="' + liLink(c.name) + '" target="_blank">in LinkedIn</a><button class="btn-3d btn-green" onclick=\'openTemplates(' + tplObj + ')\'>✉️ Templates</button></div></td></tr>';
     }).join("");
-    return listBar + '<div class="table-card"><div class="table-header hs"><span>' + label + '</span><span class="count">' + data.length + '</span></div><table><thead><tr>' + sortableHeader("Empresa","name") + sortableHeader("País","country") + sortableHeader("Industria","industry") + sortableHeader("Empleados","employees") + '<th>Etapa</th>' + sortableHeader("Inactividad","days_inactive") + '<th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    return listBar + '<div class="table-card"><div class="table-header hs"><span>⏱️ +45 días sin actividad</span><span class="count">' + data.length + '</span></div><table><thead><tr>' + sortableHeader("Empresa","name") + sortableHeader("País","country") + sortableHeader("Industria","industry") + sortableHeader("Empleados","employees") + '<th>Etapa</th>' + sortableHeader("Días inactivos","days_inactive") + '<th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
 
   if (source === "won") {

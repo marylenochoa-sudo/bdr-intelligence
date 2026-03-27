@@ -22,18 +22,20 @@ COMPANIES_WON = [
     {"name": "Intercorp", "country": "Perú", "industry": "Retail", "employees": 35000, "since": "2022", "deal_stage": "Won"},
 ]
 
-# ── RECYCLING (sorted by most recent first) ──────────────────────
+# ── RECYCLING ─────────────────────────────────────────────────────
+# Criterio: último deal creado en pipeline BDR pasó a etapa Recycling
+# Ordenado de menor a mayor días en recycling (más recientes primero)
 COMPANIES_RECYCLING = [
-    {"name": "Farmacias Unidas", "country": "Colombia", "industry": "Farmacéutica", "employees": 4500, "deal_stage": "Recycling", "days_inactive": 47, "last_activity": "2026-02-08"},
-    {"name": "Hotel Pacífico", "country": "México", "industry": "Turismo", "employees": 3500, "deal_stage": "Recycling", "days_inactive": 52, "last_activity": "2026-02-03"},
-    {"name": "Seguros Continental", "country": "Colombia", "industry": "Seguros", "employees": 750, "deal_stage": "Recycling", "days_inactive": 58, "last_activity": "2026-01-28"},
-    {"name": "Laboratorios Biomed", "country": "México", "industry": "Farmacéutica", "employees": 1100, "deal_stage": "Recycling", "days_inactive": 65, "last_activity": "2026-01-21"},
-    {"name": "Grupo Alimenticio Dorado", "country": "México", "industry": "Alimentación", "employees": 3200, "deal_stage": "Recycling", "days_inactive": 72, "last_activity": "2026-01-14"},
-    {"name": "Cementos del Valle", "country": "Colombia", "industry": "Construcción", "employees": 2800, "deal_stage": "Recycling", "days_inactive": 80, "last_activity": "2026-01-06"},
-    {"name": "TechVentures", "country": "Argentina", "industry": "Tecnología", "employees": 80, "deal_stage": "Recycling", "days_inactive": 90, "last_activity": "2025-12-27"},
-    {"name": "Energía Solar MX", "country": "México", "industry": "Energía", "employees": 95, "deal_stage": "Recycling", "days_inactive": 105, "last_activity": "2025-12-12"},
-    {"name": "FinTech Nova", "country": "Argentina", "industry": "Fintech", "employees": 200, "deal_stage": "Recycling", "days_inactive": 120, "last_activity": "2025-11-27"},
-    {"name": "Construcciones Vial", "country": "Colombia", "industry": "Construcción", "employees": 450, "deal_stage": "Recycling", "days_inactive": 135, "last_activity": "2025-11-12"},
+    {"name": "Farmacias Unidas", "country": "Colombia", "industry": "Farmacéutica", "employees": 4500, "deal_stage": "Recycling", "pipeline": "BDR", "days_in_recycling": 12, "entered_recycling": "2026-03-15", "last_deal_created": "2026-02-01", "last_activity": "2026-03-15"},
+    {"name": "Hotel Pacífico", "country": "México", "industry": "Turismo", "employees": 3500, "deal_stage": "Recycling", "pipeline": "BDR", "days_in_recycling": 18, "entered_recycling": "2026-03-09", "last_deal_created": "2026-01-20", "last_activity": "2026-03-09"},
+    {"name": "Seguros Continental", "country": "Colombia", "industry": "Seguros", "employees": 750, "deal_stage": "Recycling", "pipeline": "BDR", "days_in_recycling": 25, "entered_recycling": "2026-03-02", "last_deal_created": "2026-01-10", "last_activity": "2026-03-02"},
+    {"name": "Laboratorios Biomed", "country": "México", "industry": "Farmacéutica", "employees": 1100, "deal_stage": "Recycling", "pipeline": "BDR", "days_in_recycling": 35, "entered_recycling": "2026-02-20", "last_deal_created": "2025-12-15", "last_activity": "2026-02-20"},
+    {"name": "Grupo Alimenticio Dorado", "country": "México", "industry": "Alimentación", "employees": 3200, "deal_stage": "Recycling", "pipeline": "BDR", "days_in_recycling": 47, "entered_recycling": "2026-02-08", "last_deal_created": "2025-11-20", "last_activity": "2026-02-08"},
+    {"name": "Cementos del Valle", "country": "Colombia", "industry": "Construcción", "employees": 2800, "deal_stage": "Recycling", "pipeline": "BDR", "days_in_recycling": 55, "entered_recycling": "2026-01-31", "last_deal_created": "2025-11-05", "last_activity": "2026-01-31"},
+    {"name": "TechVentures", "country": "Argentina", "industry": "Tecnología", "employees": 80, "deal_stage": "Recycling", "pipeline": "BDR", "days_in_recycling": 68, "entered_recycling": "2026-01-18", "last_deal_created": "2025-10-20", "last_activity": "2026-01-18"},
+    {"name": "Energía Solar MX", "country": "México", "industry": "Energía", "employees": 95, "deal_stage": "Recycling", "pipeline": "BDR", "days_in_recycling": 82, "entered_recycling": "2026-01-04", "last_deal_created": "2025-09-15", "last_activity": "2026-01-04"},
+    {"name": "FinTech Nova", "country": "Argentina", "industry": "Fintech", "employees": 200, "deal_stage": "Recycling", "pipeline": "BDR", "days_in_recycling": 95, "entered_recycling": "2025-12-22", "last_deal_created": "2025-08-10", "last_activity": "2025-12-22"},
+    {"name": "Construcciones Vial", "country": "Colombia", "industry": "Construcción", "employees": 450, "deal_stage": "Recycling", "pipeline": "BDR", "days_in_recycling": 110, "entered_recycling": "2025-12-07", "last_deal_created": "2025-07-25", "last_activity": "2025-12-07"},
 ]
 
 # ── INACTIVE +45 DAYS ─────────────────────────────────────────────
