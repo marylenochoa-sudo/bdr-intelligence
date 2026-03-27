@@ -292,7 +292,7 @@ async function loadSource(source) {
 }
 
 function applyFilters() {
-  if (currentSource) loadSource(currentSource);
+  loadSource(currentSource || "all");
 }
 
 function clearAll() {
@@ -320,35 +320,123 @@ async function doSearch() {
 }
 
 function stageBadge(stage) {
-  const cls = { "Recycling": "stage-recycling", "Won": "stage-won", "Demo": "stage-demo", "Discovery": "stage-discovery", "Lead": "stage-lead" };
+  const cls = { "Recycling": "stage-recycling", "Won": "stage-won", "Demo": "stage-demo", "Discovery": "stage-discovery", "Lead": "stage-lead", "Engagement": "stage-inactive", "Approaching": "stage-inactive", "Contacted": "stage-lead" };
   return '<span class="stage-badge ' + (cls[stage] || "stage-lead") + '">' + (stage || "—") + '</span>';
+}
+
+function sourceBadges(c) {
+  const src = c.source || "";
+  if (src === "both") return ' <span style="background:#fff1ed;color:#ff5c35;font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:3px">HS</span><span style="background:#f3eeff;color:#6c47ff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:2px">LUSHA</span>';
+  if (src === "lusha") return ' <span style="background:#f3eeff;color:#6c47ff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:3px">LUSHA</span>';
+  if (src === "hubspot") return ' <span style="background:#fff1ed;color:#ff5c35;font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:3px">HS</span>';
+  return '';
 }
 
 function hsLink(name) { return "https://app.hubspot.com/contacts/search?query=" + encodeURIComponent(name); }
 function liLink(name) { return "https://www.linkedin.com/search/results/companies/?keywords=" + encodeURIComponent(name); }
 function liPerson(name, co) { return "https://www.linkedin.com/search/results/people/?keywords=" + encodeURIComponent(name + " " + co); }
 
+// ── SORTING ──────────────────────────────────────────────────────
+let currentSortCol = "";
+let currentSortAsc = true;
+let lastRenderedData = [];
+let lastRenderedSource = "";
+
+function sortData(col) {
+  if (currentSortCol === col) { currentSortAsc = !currentSortAsc; }
+  else { currentSortCol = col; currentSortAsc = true; }
+  lastRenderedData.sort((a,b) => {
+    let va = a[col], vb = b[col];
+    if (typeof va === "number" && typeof vb === "number") return currentSortAsc ? va - vb : vb - va;
+    va = (va||"").toString().toLowerCase(); vb = (vb||"").toString().toLowerCase();
+    return currentSortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+  });
+  const el = document.getElementById("results");
+  el.innerHTML = renderDataToHtml(lastRenderedSource, lastRenderedData);
+}
+
+function sortArrow(col) {
+  if (currentSortCol !== col) return ' <span style="color:#ccc;font-size:9px">⇅</span>';
+  return currentSortAsc ? ' <span style="font-size:9px">↑</span>' : ' <span style="font-size:9px">↓</span>';
+}
+
+function sortableHeader(label, col) {
+  return '<th style="cursor:pointer" onclick="sortData(\'' + col + '\')">' + label + sortArrow(col) + '</th>';
+}
+
+// ── LIST / CSV ───────────────────────────────────────────────────
+let savedList = [];
+
+function toggleListItem(idx) {
+  const c = lastRenderedData[idx];
+  if (!c) return;
+  const existing = savedList.findIndex(s => s.name === c.name);
+  if (existing >= 0) savedList.splice(existing, 1);
+  else savedList.push(c);
+  updateListCount();
+}
+
+function updateListCount() {
+  const el = document.getElementById("list-count");
+  if (el) el.textContent = savedList.length;
+}
+
+function downloadCSV() {
+  if (savedList.length === 0) { alert("Seleccioná al menos una empresa"); return; }
+  const rows = [["Empresa","País","Industria","Empleados","Etapa","Días inactivos","Fuente"]];
+  savedList.forEach(c => rows.push([c.name, c.country||"", c.industry||"", c.employees||"", c.deal_stage||c.source_label||"", c.days_inactive||"", c.source||""]));
+  const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(",")).join("\n");
+  const blob = new Blob([csv], {type: "text/csv"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = "bdr-lista.csv"; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function clearList() { savedList = []; updateListCount(); if (lastRenderedData.length) renderData(lastRenderedSource, lastRenderedData); }
+
 function renderDataToHtml(source, data) {
+  lastRenderedData = data;
+  lastRenderedSource = source;
   if (!data || !data.length) return '<div class="empty-state" style="padding:40px"><p>Sin resultados con estos filtros.</p></div>';
+
+  const showCheckbox = ["recycling","inactive","lusha_new","all"].includes(source);
+  const listBar = showCheckbox ? '<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><button class="btn-3d btn-green" onclick="downloadCSV()">📥 Descargar lista CSV</button><span style="font-size:12px;color:var(--muted)"><span id="list-count">' + savedList.length + '</span> empresas en tu lista</span><button style="font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;text-decoration:underline" onclick="clearList()">Limpiar lista</button></div>' : '';
+
+  if (source === "all") {
+    let rows = data.map((c,i) => {
+      const checked = savedList.some(s => s.name === c.name) ? "checked" : "";
+      const isLusha = c.source === "lusha" || c.source === "both";
+      const isHS = c.source === "hubspot" || c.source === "both";
+      let btns = '';
+      if (isHS) btns += '<a class="btn-3d btn-hs" href="' + hsLink(c.name) + '" target="_blank">H HubSpot</a>';
+      btns += '<a class="btn-3d btn-li" href="' + liLink(c.name) + '" target="_blank">in LinkedIn</a>';
+      if (isLusha) btns += '<a class="btn-3d btn-lusha" href="https://app.lusha.com/search?q=' + encodeURIComponent(c.name) + '" target="_blank">L Lusha</a>';
+      return '<tr><td><input type="checkbox" ' + checked + ' onchange="toggleListItem(' + i + ')" style="accent-color:var(--blue);margin-right:6px"><strong>' + c.name + '</strong>' + sourceBadges(c) + '</td><td>' + (c.country||"") + '</td><td>' + (c.industry||"") + '</td><td>' + (c.employees||0).toLocaleString() + '</td><td>' + (c.source_label||"—") + '</td><td><div class="btns">' + btns + '</div></td></tr>';
+    }).join("");
+    return listBar + '<div class="table-card"><div class="table-header" style="background:var(--blue)"><span>📋 Todas las empresas (HubSpot + Lusha)</span><span class="count">' + data.length + '</span></div><table><thead><tr>' + sortableHeader("Empresa","name") + sortableHeader("País","country") + sortableHeader("Industria","industry") + sortableHeader("Empleados","employees") + '<th>Fuente</th><th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
 
   if (source === "recycling" || source === "inactive") {
     const label = source === "recycling" ? "♻️ Recycling" : "⏱️ +45 días sin actividad";
-    const hdrCls = source === "recycling" ? "hs" : "hs";
-    let rows = data.map(c => '<tr><td><strong>' + c.name + '</strong></td><td>' + c.country + '</td><td>' + c.industry + '</td><td>' + (c.employees||0).toLocaleString() + '</td><td>' + stageBadge(c.deal_stage) + '</td><td><span class="days-badge">' + c.days_inactive + 'd</span></td><td><div class="btns"><a class="btn-3d btn-hs" href="' + hsLink(c.name) + '" target="_blank">H HubSpot</a><a class="btn-3d btn-li" href="' + liLink(c.name) + '" target="_blank">in LinkedIn</a></div></td></tr>').join("");
-    return '<div class="table-card"><div class="table-header ' + hdrCls + '"><span>' + label + '</span><span class="count">' + data.length + '</span></div><table><thead><tr><th>Empresa</th><th>País</th><th>Industria</th><th>Empleados</th><th>Etapa</th><th>Inactividad</th><th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    let rows = data.map((c,i) => {
+      const checked = savedList.some(s => s.name === c.name) ? "checked" : "";
+      return '<tr><td><input type="checkbox" ' + checked + ' onchange="toggleListItem(' + i + ')" style="accent-color:var(--blue);margin-right:6px"><strong>' + c.name + '</strong></td><td>' + c.country + '</td><td>' + c.industry + '</td><td>' + (c.employees||0).toLocaleString() + '</td><td>' + stageBadge(c.deal_stage) + '</td><td><span class="days-badge">' + c.days_inactive + 'd</span></td><td><div class="btns"><a class="btn-3d btn-hs" href="' + hsLink(c.name) + '" target="_blank">H HubSpot</a><a class="btn-3d btn-li" href="' + liLink(c.name) + '" target="_blank">in LinkedIn</a></div></td></tr>';
+    }).join("");
+    return listBar + '<div class="table-card"><div class="table-header hs"><span>' + label + '</span><span class="count">' + data.length + '</span></div><table><thead><tr>' + sortableHeader("Empresa","name") + sortableHeader("País","country") + sortableHeader("Industria","industry") + sortableHeader("Empleados","employees") + '<th>Etapa</th>' + sortableHeader("Inactividad","days_inactive") + '<th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
 
   if (source === "won") {
     let rows = data.map(c => '<tr><td><strong>' + c.name + '</strong></td><td>' + c.country + '</td><td>' + c.industry + '</td><td>' + (c.employees||0).toLocaleString() + '</td><td>Desde ' + c.since + '</td></tr>').join("");
-    return '<div class="table-card"><div class="table-header won"><span>🏆 Clientes activos (Won)</span><span class="count">' + data.length + '</span></div><table><thead><tr><th>Empresa</th><th>País</th><th>Industria</th><th>Empleados</th><th>Cliente desde</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    return '<div class="table-card"><div class="table-header won"><span>🏆 Clientes activos (Won)</span><span class="count">' + data.length + '</span></div><table><thead><tr>' + sortableHeader("Empresa","name") + sortableHeader("País","country") + sortableHeader("Industria","industry") + sortableHeader("Empleados","employees") + '<th>Cliente desde</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
 
   if (source === "lusha_new") {
-    let rows = data.map(c => {
+    let rows = data.map((c,i) => {
+      const checked = savedList.some(s => s.name === c.name) ? "checked" : "";
       let contacts = (c.contacts||[]).map(ct => '<div class="contact-card"><span class="contact-name">' + ct.name + '</span> — <span class="contact-title">' + ct.title + '</span><br><span class="contact-email">' + ct.email + '</span><div class="btns" style="margin-top:4px"><a class="btn-3d btn-li" href="' + ct.linkedin + '" target="_blank">in Perfil</a><a class="btn-3d btn-lusha" href="' + ct.lusha + '" target="_blank">L Lusha</a></div></div>').join("");
-      return '<tr><td><strong>' + c.name + '</strong><span class="new-badge">NUEVA</span></td><td>' + c.country + '</td><td>' + c.industry + '</td><td>' + (c.employees||0).toLocaleString() + '</td><td>' + contacts + '</td><td><div class="btns"><a class="btn-3d btn-li" href="' + (c.linkedin_company||liLink(c.name)) + '" target="_blank">in Empresa</a><a class="btn-3d btn-lusha" href="https://app.lusha.com/search?q=' + encodeURIComponent(c.name) + '" target="_blank">L Lusha</a><button class="btn-3d btn-green" onclick=\'openTemplates(' + JSON.stringify({name:(c.contacts&&c.contacts[0]?c.contacts[0].name:""),company:c.name,industry:c.industry,country:c.country}).replace(/'/g,"&#39;") + ')\'>✉️ Templates</button></div></td></tr>';
+      return '<tr><td><input type="checkbox" ' + checked + ' onchange="toggleListItem(' + i + ')" style="accent-color:var(--lusha);margin-right:6px"><strong>' + c.name + '</strong><span class="new-badge">NUEVA</span></td><td>' + c.country + '</td><td>' + c.industry + '</td><td>' + (c.employees||0).toLocaleString() + '</td><td>' + contacts + '</td><td><div class="btns"><a class="btn-3d btn-li" href="' + (c.linkedin_company||liLink(c.name)) + '" target="_blank">in Empresa</a><a class="btn-3d btn-lusha" href="https://app.lusha.com/search?q=' + encodeURIComponent(c.name) + '" target="_blank">L Lusha</a><button class="btn-3d btn-green" onclick=\'openTemplates(' + JSON.stringify({name:(c.contacts&&c.contacts[0]?c.contacts[0].name:""),company:c.name,industry:c.industry,country:c.country}).replace(/'/g,"&#39;") + ')\'>✉️ Templates</button></div></td></tr>';
     }).join("");
-    return '<div class="table-card"><div class="table-header lusha"><span>✨ Nuevas cuentas — no están en HubSpot</span><span class="count">' + data.length + '</span></div><table><thead><tr><th>Empresa</th><th>País</th><th>Industria</th><th>Empleados</th><th>Contactos</th><th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    return listBar + '<div class="table-card"><div class="table-header lusha"><span>✨ Nuevas cuentas — no están en HubSpot</span><span class="count">' + data.length + '</span></div><table><thead><tr>' + sortableHeader("Empresa","name") + sortableHeader("País","country") + sortableHeader("Industria","industry") + sortableHeader("Empleados","employees") + '<th>Contactos</th><th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
 
   if (source === "all") {

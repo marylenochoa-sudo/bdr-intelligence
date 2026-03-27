@@ -101,6 +101,41 @@ LUSHA_ROLES = [
     ], "linkedin_company": "https://linkedin.com/company/atlas-retail"},
 ]
 
+# ── COMPANIES IN BOTH HUBSPOT AND LUSHA (10 empresas) ─────────────
+# These appear in "Todas" with both HS and LUSHA badges
+COMPANIES_BOTH = [
+    {"name": "Farmacias Unidas", "country": "Colombia", "industry": "Farmacéutica", "employees": 4500, "deal_stage": "Recycling", "days_inactive": 47, "in_hubspot": True, "in_lusha": True, "contacts": [
+        {"name": "Carolina Vargas", "title": "CHRO", "email": "c.vargas@farmaciasunidas.co", "linkedin": "https://linkedin.com/in/carolina-vargas-fu", "lusha": "https://app.lusha.com/person/carolina-vargas"}
+    ], "linkedin_company": "https://linkedin.com/company/farmacias-unidas"},
+    {"name": "Hotel Pacífico", "country": "México", "industry": "Turismo", "employees": 3500, "deal_stage": "Recycling", "days_inactive": 52, "in_hubspot": True, "in_lusha": True, "contacts": [
+        {"name": "Miguel Paredes", "title": "Director de RRHH", "email": "m.paredes@hotelpacif.mx", "linkedin": "https://linkedin.com/in/miguel-paredes-hp", "lusha": "https://app.lusha.com/person/miguel-paredes"}
+    ], "linkedin_company": "https://linkedin.com/company/hotel-pacifico"},
+    {"name": "Kavak", "country": "México", "industry": "Automotriz", "employees": 4500, "deal_stage": "Discovery", "days_inactive": 11, "in_hubspot": True, "in_lusha": True, "contacts": [
+        {"name": "Carlos Mendez Ruiz", "title": "CHRO", "email": "c.mendez@kavak.com", "linkedin": "https://linkedin.com/in/carlos-mendez-kavak", "lusha": "https://app.lusha.com/person/carlos-mendez-kavak"}
+    ], "linkedin_company": "https://linkedin.com/company/kavak"},
+    {"name": "Despegar", "country": "Argentina", "industry": "Turismo", "employees": 2800, "deal_stage": "Lead", "days_inactive": 76, "in_hubspot": True, "in_lusha": True, "contacts": [
+        {"name": "Mariela Soto", "title": "People & Culture Director", "email": "m.soto@despegar.com", "linkedin": "https://linkedin.com/in/mariela-soto-despegar", "lusha": "https://app.lusha.com/person/mariela-soto"}
+    ], "linkedin_company": "https://linkedin.com/company/despegar"},
+    {"name": "Grupo Lala", "country": "México", "industry": "Alimentación", "employees": 18000, "deal_stage": "Contacted", "days_inactive": 81, "in_hubspot": True, "in_lusha": True, "contacts": [
+        {"name": "Enrique Salazar", "title": "Director de Capital Humano", "email": "e.salazar@lala.com.mx", "linkedin": "https://linkedin.com/in/enrique-salazar-lala", "lusha": "https://app.lusha.com/person/enrique-salazar"}
+    ], "linkedin_company": "https://linkedin.com/company/grupo-lala"},
+    {"name": "Grupo Alimenticio Dorado", "country": "México", "industry": "Alimentación", "employees": 3200, "deal_stage": "Recycling", "days_inactive": 72, "in_hubspot": True, "in_lusha": True, "contacts": [
+        {"name": "Alejandra Vega", "title": "Directora de RRHH", "email": "a.vega@grupoalimenticiodorado.mx", "linkedin": "https://linkedin.com/in/alejandra-vega-gad", "lusha": "https://app.lusha.com/person/alejandra-vega"}
+    ], "linkedin_company": "https://linkedin.com/company/grupo-alimenticio-dorado"},
+    {"name": "AutoPartes Nacional", "country": "Argentina", "industry": "Automotriz", "employees": 1400, "deal_stage": "Engagement", "days_inactive": 67, "in_hubspot": True, "in_lusha": True, "contacts": [
+        {"name": "Carolina Bravo", "title": "Gerente de Gestión Humana", "email": "c.bravo@autopartesnacional.ar", "linkedin": "https://linkedin.com/in/carolina-bravo-apn", "lusha": "https://app.lusha.com/person/carolina-bravo"}
+    ], "linkedin_company": "https://linkedin.com/company/autopartes-nacional"},
+    {"name": "Cadena Supermercados Plus", "country": "México", "industry": "Retail", "employees": 4000, "deal_stage": "Approaching", "days_inactive": 77, "in_hubspot": True, "in_lusha": True, "contacts": [
+        {"name": "María Torres", "title": "Directora de RRHH", "email": "m.torres@supermercadosplus.mx", "linkedin": "https://linkedin.com/in/maria-torres-sp", "lusha": "https://app.lusha.com/person/maria-torres"}
+    ], "linkedin_company": "https://linkedin.com/company/supermercados-plus"},
+    {"name": "Cementos del Valle", "country": "Colombia", "industry": "Construcción", "employees": 2800, "deal_stage": "Recycling", "days_inactive": 80, "in_hubspot": True, "in_lusha": True, "contacts": [
+        {"name": "Tomás Aguilar", "title": "Director de Desarrollo Organizacional", "email": "t.aguilar@cementosdelvalle.co", "linkedin": "https://linkedin.com/in/tomas-aguilar-cv", "lusha": "https://app.lusha.com/person/tomas-aguilar"}
+    ], "linkedin_company": "https://linkedin.com/company/cementos-del-valle"},
+    {"name": "Habi", "country": "Colombia", "industry": "PropTech", "employees": 760, "deal_stage": "Lead", "days_inactive": 64, "in_hubspot": True, "in_lusha": True, "contacts": [
+        {"name": "Manuela Pérez", "title": "VP People", "email": "m.perez@habi.co", "linkedin": "https://linkedin.com/in/manuela-perez-habi", "lusha": "https://app.lusha.com/person/manuela-perez"}
+    ], "linkedin_company": "https://linkedin.com/company/habi"},
+]
+
 # ── HUMAND PRODUCT INFO ───────────────────────────────────────────
 HUMAND_PRODUCT = {
     "humand": "Humand es una plataforma todo en uno que centraliza la gestión de RRHH, comunicación interna, onboarding y cultura empresarial en una sola app desde el celular. +1.500 empresas la usan, 1.6M usuarios activos, 4.9/5 en app stores. USD 66M levantados (Kaszek + Goodwater).",

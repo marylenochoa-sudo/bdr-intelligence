@@ -1,5 +1,6 @@
 from flask import Flask, render_template, jsonify, request
-from data import COMPANIES_RECYCLING, COMPANIES_INACTIVE, COMPANIES_WON, LUSHA_NEW, LUSHA_ROLES, HUMAND_PRODUCT
+from data import COMPANIES_RECYCLING, COMPANIES_INACTIVE, COMPANIES_WON, LUSHA_NEW, LUSHA_ROLES, HUMAND_PRODUCT, COMPANIES_BOTH
+import csv, io
 
 app = Flask(__name__)
 
@@ -37,16 +38,24 @@ def get_data():
         return True
 
     if source == "all":
-        # Merge all sources: tag each with its source
         merged = []
+        # Companies in BOTH (show both badges)
+        both_names = {c["name"] for c in COMPANIES_BOTH}
+        for c in COMPANIES_BOTH:
+            merged.append({**c, "source": "both", "source_label": c.get("deal_stage","HS+Lusha")})
+        # HubSpot only (skip those already in BOTH)
         for c in COMPANIES_RECYCLING:
-            merged.append({**c, "source": "hubspot", "source_label": "Recycling"})
+            if c["name"] not in both_names:
+                merged.append({**c, "source": "hubspot", "source_label": "Recycling"})
         for c in COMPANIES_INACTIVE:
-            merged.append({**c, "source": "hubspot", "source_label": "Inactiva +45d"})
+            if c["name"] not in both_names:
+                merged.append({**c, "source": "hubspot", "source_label": "Inactiva +45d"})
         for c in COMPANIES_WON:
             merged.append({**c, "source": "hubspot", "source_label": "Won"})
+        # Lusha only (skip those already in BOTH)
         for c in LUSHA_NEW:
-            merged.append({**c, "source": "lusha", "source_label": "Lusha Nueva"})
+            if c["name"] not in both_names:
+                merged.append({**c, "source": "lusha", "source_label": "Lusha Nueva"})
         for c in LUSHA_ROLES:
             merged.append({**c, "source": "lusha", "source_label": "Lusha Rol C-Level"})
         return jsonify([c for c in merged if match_filters(c)])
@@ -122,6 +131,18 @@ def get_filters():
     countries = sorted(set(c["country"] for c in all_data if c.get("country")))
     industries = sorted(set(c["industry"] for c in all_data if c.get("industry")))
     return jsonify({"countries": countries, "industries": industries})
+
+@app.route("/api/export-csv", methods=["POST"])
+def export_csv():
+    from flask import Response
+    data = request.json.get("companies", [])
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Empresa", "País", "Industria", "Empleados", "Etapa", "Días inactivos", "Fuente"])
+    for c in data:
+        writer.writerow([c.get("name",""), c.get("country",""), c.get("industry",""), c.get("employees",""), c.get("deal_stage",""), c.get("days_inactive",""), c.get("source_label","")])
+    output.seek(0)
+    return Response(output.getvalue(), mimetype="text/csv", headers={"Content-Disposition": "attachment;filename=bdr-lista.csv"})
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
