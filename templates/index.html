@@ -383,10 +383,21 @@ function updateListCount() {
 
 function downloadCSV() {
   if (savedList.length === 0) { alert("Seleccioná al menos una empresa"); return; }
-  const rows = [["Empresa","País","Industria","Empleados","Etapa","Días inactivos","Fuente"]];
-  savedList.forEach(c => rows.push([c.name, c.country||"", c.industry||"", c.employees||"", c.deal_stage||c.source_label||"", c.days_inactive||"", c.source||""]));
+  const rows = [["Empresa","País","Industria","Empleados","Etapa pipeline","Días inactivos","LinkedIn empresa","Lusha empresa","Contacto nombre","Contacto cargo","Contacto email","Contacto teléfono","Contacto LinkedIn","Contacto Lusha"]];
+  savedList.forEach(c => {
+    const ct = (c.contacts && c.contacts[0]) || {};
+    const liCo = c.linkedin_company || "https://www.linkedin.com/search/results/companies/?keywords=" + encodeURIComponent(c.name||"");
+    const lushaCo = c.source === "lusha" || c.source === "both" || c.in_lusha ? "https://app.lusha.com/search?q=" + encodeURIComponent(c.name||"") : "";
+    rows.push([
+      c.name||"", c.country||"", c.industry||"", c.employees||"",
+      c.deal_stage||c.source_label||"Por cargar a HS", c.days_inactive||"",
+      liCo, lushaCo,
+      ct.name||"", ct.title||"", ct.email||"", ct.phone||"",
+      ct.linkedin||"", ct.lusha||""
+    ]);
+  });
   const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(",")).join("\n");
-  const blob = new Blob([csv], {type: "text/csv"});
+  const blob = new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a"); a.href = url; a.download = "bdr-lista.csv"; a.click();
   URL.revokeObjectURL(url);
