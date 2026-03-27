@@ -60,7 +60,9 @@ def get_data():
             merged.append({**c, "source": "lusha", "source_label": "Lusha Rol C-Level"})
         return jsonify([c for c in merged if match_filters(c)])
     elif source == "recycling":
-        return jsonify([c for c in COMPANIES_RECYCLING if match_filters(c)])
+        # Only show if last deal is in BDR pipeline AND no newer deal in Customer Journey (AE)
+        valid = [c for c in COMPANIES_RECYCLING if not c.get("has_newer_cj_deal", False)]
+        return jsonify([c for c in valid if match_filters(c)])
     elif source == "inactive":
         return jsonify([c for c in COMPANIES_INACTIVE if match_filters(c)])
     elif source == "won":
