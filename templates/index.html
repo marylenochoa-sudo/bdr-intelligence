@@ -235,13 +235,11 @@ function toggleEmployeesDropdown() {
 function updateEmployeesLabel() {
   const selected = getSelectedEmployees();
   const label = document.getElementById("f-employees-label");
-  const tagsEl = document.getElementById("f-employees-tags");
+  if (!label) return;
   if (selected.length === 0) {
-    label.textContent = "Cualquier tamaño";
-    tagsEl.innerHTML = "";
+    label.textContent = "Empleados";
   } else {
-    label.textContent = selected.length + " rango" + (selected.length > 1 ? "s" : "") + " seleccionado" + (selected.length > 1 ? "s" : "");
-    tagsEl.innerHTML = selected.map(s => '<span class="selected-tag">' + s + '</span>').join("");
+    label.textContent = selected.length + " rango" + (selected.length > 1 ? "s" : "");
   }
 }
 
