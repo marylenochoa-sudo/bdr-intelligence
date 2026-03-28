@@ -562,10 +562,6 @@ function renderData(source, data) {
 }
 
 loadFilters();
-// Load all data by default on page load
-window.addEventListener("DOMContentLoaded", function() { loadSource("all"); });
-// Fallback if DOMContentLoaded already fired
-if (document.readyState !== "loading") { loadSource("all"); }
 
 // ── CLIENT REFERENCES ────────────────────────────────────────────
 const CLIENT_REFS = {
@@ -864,5 +860,6 @@ function copyTemplate() {
     </div>
   </div>
 </div>
+<script>loadSource("all");</script>
 </body>
 </html>
