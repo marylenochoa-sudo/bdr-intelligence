@@ -195,11 +195,7 @@
       <button onclick="clearFilters()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--muted);background:none;cursor:pointer">Limpiar</button>
     </div>
     <div class="results" id="results">
-      <div class="empty-state">
-        <div class="icon">🎯</div>
-        <h3>Seleccioná un filtro o preguntame</h3>
-        <p>Usá los botones del panel izquierdo para ver data de HubSpot o Lusha, aplicá filtros, o escribí lo que necesitás en el buscador.</p>
-      </div>
+      <div class="loading">Cargando...</div>
     </div>
   </div>
 </div>
@@ -286,6 +282,7 @@ function applyLocalFilters() {
     return true;
   });
 
+  lastRenderedData = filtered;
   document.getElementById("results").innerHTML = renderDataToHtml(currentSource, filtered);
 }
 
@@ -336,10 +333,7 @@ function populateFilterOptions(data) {
 
 function clearAll() {
   clearFilters();
-  currentSource = "";
-  currentRawData = [];
-  document.querySelectorAll(".nav-btn").forEach(b => b.className = "nav-btn");
-  document.getElementById("results").innerHTML = '<div class="empty-state"><div class="icon">🎯</div><h3>Seleccioná una vista</h3><p>Usá los botones del panel izquierdo. Los filtros aplican sobre la vista que elijas.</p></div>';
+  loadSource("all");
 }
 
 async function doSearch() {
@@ -568,6 +562,8 @@ function renderData(source, data) {
 }
 
 loadFilters();
+// Load all data by default on page load
+loadSource("all");
 
 // ── CLIENT REFERENCES ────────────────────────────────────────────
 const CLIENT_REFS = {
