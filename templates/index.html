@@ -563,7 +563,9 @@ function renderData(source, data) {
 
 loadFilters();
 // Load all data by default on page load
-loadSource("all");
+window.addEventListener("DOMContentLoaded", function() { loadSource("all"); });
+// Fallback if DOMContentLoaded already fired
+if (document.readyState !== "loading") { loadSource("all"); }
 
 // ── CLIENT REFERENCES ────────────────────────────────────────────
 const CLIENT_REFS = {
