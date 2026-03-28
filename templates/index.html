@@ -432,7 +432,18 @@ function downloadCSV() {
   URL.revokeObjectURL(url);
 }
 
-function clearList() { savedList = []; updateListCount(); if (lastRenderedData.length) renderData(lastRenderedSource, lastRenderedData); }
+function clearList() { savedList = []; updateListCount(); if (lastRenderedData.length) { document.getElementById("results").innerHTML = renderDataToHtml(lastRenderedSource, lastRenderedData); } }
+
+function toggleSelectAll(checked) {
+  if (checked) {
+    lastRenderedData.forEach(c => { if (!savedList.some(s => s.name === c.name)) savedList.push(c); });
+  } else {
+    const names = new Set(lastRenderedData.map(c => c.name));
+    savedList = savedList.filter(s => !names.has(s.name));
+  }
+  updateListCount();
+  document.getElementById("results").innerHTML = renderDataToHtml(lastRenderedSource, lastRenderedData);
+}
 
 function renderDataToHtml(source, data) {
   lastRenderedData = data;
@@ -440,6 +451,8 @@ function renderDataToHtml(source, data) {
   if (!data || !data.length) return '<div class="empty-state" style="padding:40px"><p>Sin resultados con estos filtros.</p></div>';
 
   const showCheckbox = ["recycling","inactive","lusha_new","all"].includes(source);
+  const allChecked = showCheckbox && data.length > 0 && data.every(c => savedList.some(s => s.name === c.name));
+  const selectAllCheck = showCheckbox ? '<input type="checkbox" ' + (allChecked ? "checked" : "") + ' onchange="toggleSelectAll(this.checked)" style="accent-color:var(--blue);cursor:pointer" title="Seleccionar todas">' : '';
   const listBar = showCheckbox ? '<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><button class="btn-3d btn-green" onclick="downloadCSV()">📥 Descargar lista CSV</button><span style="font-size:12px;color:var(--muted)"><span id="list-count">' + savedList.length + '</span> empresas en tu lista</span><button style="font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;text-decoration:underline" onclick="clearList()">Limpiar lista</button></div>' : '';
 
   if (source === "all") {
@@ -452,9 +465,9 @@ function renderDataToHtml(source, data) {
       btns += '<a class="btn-3d btn-li" href="' + liLink(c.name) + '" target="_blank">in LinkedIn</a>';
       if (isLusha) btns += '<a class="btn-3d btn-lusha" href="https://app.lusha.com/search?q=' + encodeURIComponent(c.name) + '" target="_blank">L Lusha</a>';
       const pipeline = (c.source === "lusha" && !c.deal_stage) ? '<span style="color:var(--muted);font-size:11px;font-style:italic">Por cargar a HS</span>' : stageBadge(c.deal_stage || c.source_label);
-      return '<tr><td><input type="checkbox" ' + checked + ' onchange="toggleListItem(' + i + ')" style="accent-color:var(--blue);margin-right:6px"><strong>' + c.name + '</strong>' + sourceBadges(c) + '</td><td>' + (c.country||"") + '</td><td>' + (c.industry||"") + '</td><td>' + (c.employees||0).toLocaleString() + '</td><td>' + pipeline + '</td><td><div class="btns">' + btns + '</div></td></tr>';
+      return '<tr><td style="width:30px"><input type="checkbox" ' + checked + ' onchange="toggleListItem(' + i + ')" style="accent-color:var(--blue)"></td><td><strong>' + c.name + '</strong>' + sourceBadges(c) + '</td><td>' + (c.country||"") + '</td><td>' + (c.industry||"") + '</td><td>' + (c.employees||0).toLocaleString() + '</td><td>' + pipeline + '</td><td><div class="btns">' + btns + '</div></td></tr>';
     }).join("");
-    return listBar + '<div class="table-card"><div class="table-header" style="background:var(--blue)"><span>📋 Todas las empresas (HubSpot + Lusha)</span><span class="count">' + data.length + '</span></div><table><thead><tr>' + sortableHeader("Empresa","name") + sortableHeader("País","country") + sortableHeader("Industria","industry") + sortableHeader("Empleados","employees") + sortableHeader("Etapa pipeline","deal_stage") + '<th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    return listBar + '<div class="table-card"><div class="table-header" style="background:var(--blue)"><span>📋 Todas las empresas (HubSpot + Lusha)</span><span class="count">' + data.length + '</span></div><table><thead><tr><th style="width:30px">' + selectAllCheck + '</th>' + sortableHeader("Empresa","name") + sortableHeader("País","country") + sortableHeader("Industria","industry") + sortableHeader("Empleados","employees") + sortableHeader("Etapa pipeline","deal_stage") + '<th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
 
   if (source === "recycling") {
@@ -462,23 +475,23 @@ function renderDataToHtml(source, data) {
       const checked = savedList.some(s => s.name === c.name) ? "checked" : "";
       const tplObj = JSON.stringify({name:"NOMBRE",company:c.name,industry:c.industry,country:c.country}).replace(/'/g,"&#39;");
       const days = c.days_in_recycling || c.days_inactive || 0;
-      return '<tr><td><input type="checkbox" ' + checked + ' onchange="toggleListItem(' + i + ')" style="accent-color:var(--blue);margin-right:6px"><strong>' + c.name + '</strong></td><td>' + c.country + '</td><td>' + c.industry + '</td><td>' + (c.employees||0).toLocaleString() + '</td><td><span style="font-size:11px;color:var(--muted)">Pipeline BDR</span></td><td><span class="days-badge">' + days + 'd</span></td><td style="font-size:11px;color:var(--muted)">' + (c.entered_recycling||"—") + '</td><td><div class="btns"><a class="btn-3d btn-hs" href="' + hsLink(c.name) + '" target="_blank">H HubSpot</a><a class="btn-3d btn-li" href="' + liLink(c.name) + '" target="_blank">in LinkedIn</a><button class="btn-3d btn-green" onclick=\'openTemplates(' + tplObj + ')\'>✉️ Templates</button></div></td></tr>';
+      return '<tr><td style="width:30px"><input type="checkbox" ' + checked + ' onchange="toggleListItem(' + i + ')" style="accent-color:var(--blue)"></td><td><strong>' + c.name + '</strong></td><td>' + c.country + '</td><td>' + c.industry + '</td><td>' + (c.employees||0).toLocaleString() + '</td><td><span style="font-size:11px;color:var(--muted)">Pipeline BDR</span></td><td><span class="days-badge">' + days + 'd</span></td><td style="font-size:11px;color:var(--muted)">' + (c.entered_recycling||"—") + '</td><td><div class="btns"><a class="btn-3d btn-hs" href="' + hsLink(c.name) + '" target="_blank">H HubSpot</a><a class="btn-3d btn-li" href="' + liLink(c.name) + '" target="_blank">in LinkedIn</a><button class="btn-3d btn-green" onclick=\'openTemplates(' + tplObj + ')\'>✉️ Templates</button></div></td></tr>';
     }).join("");
-    return listBar + '<div class="table-card"><div class="table-header hs"><span>♻️ Recycling — Pipeline BDR</span><span class="count">' + data.length + '</span></div><table><thead><tr>' + sortableHeader("Empresa","name") + sortableHeader("País","country") + sortableHeader("Industria","industry") + sortableHeader("Empleados","employees") + '<th>Pipeline</th>' + sortableHeader("Días en Recycling","days_in_recycling") + sortableHeader("Entró a Recycling","entered_recycling") + '<th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    return listBar + '<div class="table-card"><div class="table-header hs"><span>♻️ Recycling — Pipeline BDR</span><span class="count">' + data.length + '</span></div><table><thead><tr><th style="width:30px">' + selectAllCheck + '</th>' + sortableHeader("Empresa","name") + sortableHeader("País","country") + sortableHeader("Industria","industry") + sortableHeader("Empleados","employees") + '<th>Pipeline</th>' + sortableHeader("Días en Recycling","days_in_recycling") + sortableHeader("Entró a Recycling","entered_recycling") + '<th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
 
   if (source === "inactive") {
     let rows = data.map((c,i) => {
       const checked = savedList.some(s => s.name === c.name) ? "checked" : "";
       const tplObj = JSON.stringify({name:"NOMBRE",company:c.name,industry:c.industry,country:c.country}).replace(/'/g,"&#39;");
-      return '<tr><td><input type="checkbox" ' + checked + ' onchange="toggleListItem(' + i + ')" style="accent-color:var(--blue);margin-right:6px"><strong>' + c.name + '</strong></td><td>' + c.country + '</td><td>' + c.industry + '</td><td>' + (c.employees||0).toLocaleString() + '</td><td>' + stageBadge(c.deal_stage) + '</td><td><span class="days-badge">' + c.days_inactive + 'd</span></td><td><div class="btns"><a class="btn-3d btn-hs" href="' + hsLink(c.name) + '" target="_blank">H HubSpot</a><a class="btn-3d btn-li" href="' + liLink(c.name) + '" target="_blank">in LinkedIn</a><button class="btn-3d btn-green" onclick=\'openTemplates(' + tplObj + ')\'>✉️ Templates</button></div></td></tr>';
+      return '<tr><td style="width:30px"><input type="checkbox" ' + checked + ' onchange="toggleListItem(' + i + ')" style="accent-color:var(--blue)"></td><td><strong>' + c.name + '</strong></td><td>' + c.country + '</td><td>' + c.industry + '</td><td>' + (c.employees||0).toLocaleString() + '</td><td>' + stageBadge(c.deal_stage) + '</td><td><span class="days-badge">' + c.days_inactive + 'd</span></td><td><div class="btns"><a class="btn-3d btn-hs" href="' + hsLink(c.name) + '" target="_blank">H HubSpot</a><a class="btn-3d btn-li" href="' + liLink(c.name) + '" target="_blank">in LinkedIn</a><button class="btn-3d btn-green" onclick=\'openTemplates(' + tplObj + ')\'>✉️ Templates</button></div></td></tr>';
     }).join("");
-    return listBar + '<div class="table-card"><div class="table-header hs"><span>⏱️ +45 días sin actividad</span><span class="count">' + data.length + '</span></div><table><thead><tr>' + sortableHeader("Empresa","name") + sortableHeader("País","country") + sortableHeader("Industria","industry") + sortableHeader("Empleados","employees") + '<th>Etapa</th>' + sortableHeader("Días inactivos","days_inactive") + '<th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    return listBar + '<div class="table-card"><div class="table-header hs"><span>⏱️ +45 días sin actividad</span><span class="count">' + data.length + '</span></div><table><thead><tr><th style="width:30px">' + selectAllCheck + '</th>' + sortableHeader("Empresa","name") + sortableHeader("País","country") + sortableHeader("Industria","industry") + sortableHeader("Empleados","employees") + '<th>Etapa</th>' + sortableHeader("Días inactivos","days_inactive") + '<th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
 
   if (source === "won") {
     let rows = data.map(c => '<tr><td><strong>' + c.name + '</strong></td><td>' + c.country + '</td><td>' + c.industry + '</td><td>' + (c.employees||0).toLocaleString() + '</td><td>Desde ' + c.since + '</td></tr>').join("");
-    return '<div class="table-card"><div class="table-header won"><span>🏆 Clientes activos (Won)</span><span class="count">' + data.length + '</span></div><table><thead><tr>' + sortableHeader("Empresa","name") + sortableHeader("País","country") + sortableHeader("Industria","industry") + sortableHeader("Empleados","employees") + '<th>Cliente desde</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    return '<div class="table-card"><div class="table-header won"><span>🏆 Clientes activos (Won)</span><span class="count">' + data.length + '</span></div><table><thead><tr><th style="width:30px">' + selectAllCheck + '</th>' + sortableHeader("Empresa","name") + sortableHeader("País","country") + sortableHeader("Industria","industry") + sortableHeader("Empleados","employees") + '<th>Cliente desde</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
 
   if (source === "lusha_new") {
@@ -495,9 +508,9 @@ function renderDataToHtml(source, data) {
             '<button class="btn-3d btn-green" onclick=\'openTemplates(' + tplObj + ')\'>✉️ Templates</button>' +
           '</div></div>';
       }).join("");
-      return '<tr><td><input type="checkbox" ' + checked + ' onchange="toggleListItem(' + i + ')" style="accent-color:var(--lusha);margin-right:6px"><strong>' + c.name + '</strong><span class="new-badge">NUEVA</span></td><td>' + c.country + '</td><td>' + c.industry + '</td><td>' + (c.employees||0).toLocaleString() + '</td><td>' + contacts + '</td><td><div class="btns" style="flex-direction:column;gap:4px"><a class="btn-3d btn-li" href="' + (c.linkedin_company||liLink(c.name)) + '" target="_blank">in Empresa</a><a class="btn-3d btn-lusha" href="https://app.lusha.com/search?q=' + encodeURIComponent(c.name) + '" target="_blank">L Lusha Co.</a></div></td></tr>';
+      return '<tr><td style="width:30px"><input type="checkbox" ' + checked + ' onchange="toggleListItem(' + i + ')" style="accent-color:var(--lusha)"></td><td><strong>' + c.name + '</strong><span class="new-badge">NUEVA</span></td><td>' + c.country + '</td><td>' + c.industry + '</td><td>' + (c.employees||0).toLocaleString() + '</td><td>' + contacts + '</td><td><div class="btns" style="flex-direction:column;gap:4px"><a class="btn-3d btn-li" href="' + (c.linkedin_company||liLink(c.name)) + '" target="_blank">in Empresa</a><a class="btn-3d btn-lusha" href="https://app.lusha.com/search?q=' + encodeURIComponent(c.name) + '" target="_blank">L Lusha Co.</a></div></td></tr>';
     }).join("");
-    return listBar + '<div class="table-card"><div class="table-header lusha"><span>✨ Nuevas cuentas — no están en HubSpot</span><span class="count">' + data.length + '</span></div><table><thead><tr>' + sortableHeader("Empresa","name") + sortableHeader("País","country") + sortableHeader("Industria","industry") + sortableHeader("Empleados","employees") + '<th>Contactos (con acciones)</th><th>Empresa</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    return listBar + '<div class="table-card"><div class="table-header lusha"><span>✨ Nuevas cuentas — no están en HubSpot</span><span class="count">' + data.length + '</span></div><table><thead><tr><th style="width:30px">' + selectAllCheck + '</th>' + sortableHeader("Empresa","name") + sortableHeader("País","country") + sortableHeader("Industria","industry") + sortableHeader("Empleados","employees") + '<th>Contactos (con acciones)</th><th>Empresa</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
 
   if (source === "all") {
@@ -529,7 +542,7 @@ function renderDataToHtml(source, data) {
       }).join("");
       return '<tr><td><strong>' + c.name + '</strong></td><td>' + c.country + '</td><td>' + c.industry + '</td><td>' + (c.employees||0).toLocaleString() + '</td><td>' + contacts + '</td><td>' + stageBadge(c.deal_stage) + '</td><td><div class="btns" style="flex-direction:column;gap:4px"><a class="btn-3d btn-hs" href="' + hsLink(c.name) + '" target="_blank">H HubSpot</a><a class="btn-3d btn-li" href="' + (c.linkedin_company||liLink(c.name)) + '" target="_blank">in Empresa</a></div></td></tr>';
     }).join("");
-    return '<div class="table-card"><div class="table-header lusha"><span>👤 Nuevos roles C-Level RRHH</span><span class="count">' + data.length + '</span></div><table><thead><tr>' + sortableHeader("Empresa","name") + sortableHeader("País","country") + sortableHeader("Industria","industry") + sortableHeader("Empleados","employees") + '<th>Contactos (con acciones)</th><th>Estado CRM</th><th>Empresa</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    return '<div class="table-card"><div class="table-header lusha"><span>👤 Nuevos roles C-Level RRHH</span><span class="count">' + data.length + '</span></div><table><thead><tr><th style="width:30px">' + selectAllCheck + '</th>' + sortableHeader("Empresa","name") + sortableHeader("País","country") + sortableHeader("Industria","industry") + sortableHeader("Empleados","employees") + '<th>Contactos (con acciones)</th><th>Estado CRM</th><th>Empresa</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
 
   return "";
